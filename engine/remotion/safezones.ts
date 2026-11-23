@@ -71,7 +71,7 @@ const inter = (a: Rect, b: Rect) => area({x0: Math.max(a.x0, b.x0), y0: Math.max
 
 /** Estimated rendered text box (matches Overlays typography). */
 export function textBox(text: string, style: string, slot: Slot, w: number, h: number): Rect {
-  const u = h / 720;
+  const u = Math.min(w, h) / 720;
   const size = (style === 'title' ? 64 : style === 'caption' ? 34 : 34) * u;
   const padX = (style === 'title' ? 24 : 20) * u, padY = (style === 'title' ? 10 : 8) * u;
   const narrow = slot === 'side-left' || slot === 'side-right';

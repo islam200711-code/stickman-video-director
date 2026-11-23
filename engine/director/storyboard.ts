@@ -79,7 +79,7 @@ export const Shot = z.object({
   camera: ShotCamera.default({}),
   blocking: z.record(z.object({at: Vec3, facing: z.number().default(0), expression: Expression.default('neutral'), label: z.string().optional()})).default({}),
   beats: z.array(Beat).default([]),
-  props: z.array(z.object({kind: z.string(), at: Vec3, rotation: z.number().default(0), scale: z.number().default(1), color: z.string().optional(), appearAt: z.number().optional(), disappearAt: z.number().optional(), move: z.object({to: Vec3, start: z.number(), end: z.number(), roll: z.boolean().default(false), weight: z.enum(['smooth', 'heavy', 'light', 'drop']).default('smooth')}).optional()})).default([]),
+  props: z.array(z.object({kind: z.string(), at: Vec3, rotation: z.number().default(0), scale: z.number().default(1), color: z.string().optional(), appearAt: z.number().optional(), disappearAt: z.number().optional(), inflate: z.object({from: z.number(), to: z.number(), start: z.number(), end: z.number()}).optional(), move: z.object({to: Vec3, start: z.number(), end: z.number(), roll: z.boolean().default(false), weight: z.enum(['smooth', 'heavy', 'light', 'drop']).default('smooth')}).optional()})).default([]),
   text: z.array(z.object({text: z.string(), at: z.number(), until: z.number().optional(), style: z.enum(['title', 'caption', 'label', 'lower-third']).default('label'), position: z.enum(['auto', 'top', 'center', 'bottom']).default('auto')})).default([]),
   sfx: z.array(z.object({sound: z.string(), at: z.number(), volume: z.number().default(0.8), important: z.boolean().optional()})).default([]),
   ambience: z.string().default('auto'),   // ambience cue ('auto' = from environment, 'none', or a cue/query)

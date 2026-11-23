@@ -28,8 +28,10 @@ const MovingProp: React.FC<{p: Scene['props'][number]; t: number}> = ({p, t}) =>
     wobble = m.wobble;
   }
   const y = (p.rotation * Math.PI) / 180;
+  let sc = p.scale;
+  if (p.inflate) {const u = Math.max(0, Math.min(1, (t - p.inflate.start) / Math.max(0.01, p.inflate.end - p.inflate.start))); const e = u * u * (3 - 2 * u); const k = p.inflate.from + (p.inflate.to - p.inflate.from) * e; sc = p.scale * Math.max(0.02, k) * (1 + 0.03 * Math.sin(t * 9) * (u > 0 && u < 1 ? 1 : 0));}
   return (
-    <group position={pos} rotation={[0, y, 0]} scale={p.scale}>
+    <group position={pos} rotation={[0, y, 0]} scale={[sc, p.inflate ? Math.max(0.02, sc * (sc < p.scale ? 0.85 + 0.15 * sc / p.scale : 1)) : sc, sc]}>
       <group position={[0, 0.6, 0]} rotation={[wobble * 0.5, 0, roll + wobble]}><group position={[0, -0.6, 0]}><SceneProp kind={p.kind} color={p.color} /></group></group>
     </group>
   );

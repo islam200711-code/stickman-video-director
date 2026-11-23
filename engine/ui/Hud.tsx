@@ -37,7 +37,7 @@ const Window: React.FC<{x: number; y: number; w: number; h: number; title: strin
 export const Hud: React.FC<{scene: Scene}> = ({scene}) => {
   const {fps, width: w, height: h} = useVideoConfig();
   const t = useCurrentFrame() / fps;
-  const u = h / 720;
+  const u = Math.min(w, h) / 720;
   const out: React.ReactNode[] = [];
   scene.ui.forEach((e: U, i) => {
     const end = e.until ?? e.at + 3;

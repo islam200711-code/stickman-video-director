@@ -82,6 +82,7 @@ export const Prop = z.object({
   color: z.string().optional(),
   appearAt: z.number().optional(),
   disappearAt: z.number().optional(),
+  inflate: z.object({from: z.number(), to: z.number(), start: z.number(), end: z.number()}).optional(), // scale animation (inflatables, growth)
   move: z.object({to: Vec3, start: z.number(), end: z.number(), roll: z.boolean().default(false), weight: z.enum(['smooth', 'heavy', 'light', 'drop']).default('smooth')}).optional(),
 });
 export type Prop = z.infer<typeof Prop>;

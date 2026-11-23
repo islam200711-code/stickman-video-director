@@ -1,0 +1,403 @@
+{
+ "id": "ghost-army-short",
+ "title": "WWII's Army of Rubber Tanks",
+ "brief": {
+  "category": "history (5.2 Wars & Battles)",
+  "topic": "The Ghost Army",
+  "language": "en",
+  "tone": "punchy",
+  "targetDuration": 20,
+  "aspect": "9:16",
+  "quality": "720p",
+  "fps": 24
+ },
+ "cast": [
+  "sam",
+  "riley",
+  "jo"
+ ],
+ "voice": {
+  "provider": "espeak",
+  "rate": 200
+ },
+ "music": {
+  "query": "sneaking mysterious comedy",
+  "volume": 0.14
+ },
+ "captions": true,
+ "style": {
+  "characterMode": "flat_2d"
+ },
+ "shots": [
+  {
+   "id": "s1-hook",
+   "environment": "park",
+   "timeOfDay": "dusk",
+   "look": "golden-hour",
+   "camera": {
+    "shot": "medium",
+    "focus": [
+     -0.6,
+     0,
+     0.1
+    ],
+    "fov": 48,
+    "move": "push-in"
+   },
+   "narration": "These tanks fooled the German army. They were made of rubber.",
+   "blocking": {
+    "sam": {
+     "at": [
+      -1.45,
+      0,
+      0.25
+     ],
+     "facing": 90,
+     "expression": "thinking"
+    }
+   },
+   "props": [
+    {
+     "kind": "tank",
+     "at": [
+      0.6,
+      0,
+      -0.2
+     ],
+     "scale": 0.8,
+     "move": {
+      "to": [
+       0.6,
+       0,
+       -0.2
+      ],
+      "start": 1.7,
+      "end": 3.2,
+      "weight": "heavy"
+     }
+    }
+   ],
+   "beats": [
+    {
+     "who": "sam",
+     "do": "reach",
+     "at": 1.1,
+     "until": 2.0,
+     "reach": {
+      "right": [
+       -0.62,
+       0.62,
+       0.05
+      ]
+     },
+     "reachRamp": 0.25
+    },
+    {
+     "who": "sam",
+     "do": "surprised",
+     "at": 2.1,
+     "facing": 60,
+     "expression": "surprised"
+    }
+   ],
+   "sfx": [
+    {
+     "sound": "boing",
+     "at": 1.7,
+     "volume": 0.8
+    }
+   ]
+  },
+  {
+   "id": "s2-ghost-army",
+   "environment": "park",
+   "timeOfDay": "dusk",
+   "look": "golden-hour",
+   "camera": {
+    "shot": "wide",
+    "focus": [
+     0.3,
+     0,
+     0
+    ],
+    "fov": 56
+   },
+   "narration": "In World War Two, the secret Ghost Army faked whole divisions: rubber tanks, recorded engine noise, fake radio chatter.",
+   "blocking": {
+    "riley": {
+     "at": [
+      -1.6,
+      0,
+      0.6
+     ],
+     "facing": 70,
+     "expression": "determined"
+    },
+    "jo": {
+     "at": [
+      -1.1,
+      0,
+      1.2
+     ],
+     "facing": 60,
+     "expression": "happy"
+    },
+    "sam": {
+     "at": [
+      2.2,
+      0,
+      1.0
+     ],
+     "facing": -60,
+     "expression": "smug"
+    }
+   },
+   "props": [
+    {
+     "kind": "tank",
+     "at": [
+      0.3,
+      0,
+      -0.6
+     ],
+     "scale": 0.8,
+     "inflate": {
+      "from": 0.08,
+      "to": 1,
+      "start": 0.3,
+      "end": 3.6
+     }
+    },
+    {
+     "kind": "speaker",
+     "at": [
+      2.6,
+      0,
+      -0.3
+     ],
+     "rotation": -20
+    }
+   ],
+   "beats": [
+    {
+     "who": "riley",
+     "do": "work",
+     "at": 0.2,
+     "until": 3.6
+    },
+    {
+     "who": "jo",
+     "do": "push",
+     "at": 0.3,
+     "until": 3.6
+    },
+    {
+     "who": "jo",
+     "do": "celebrate",
+     "at": 3.7
+    },
+    {
+     "who": "riley",
+     "do": "thumbsup",
+     "at": 3.8
+    },
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 0
+    }
+   ],
+   "vfx": [
+    {
+     "type": "energy",
+     "at": 3.6,
+     "position": [
+      2.6,
+      0.4,
+      -0.3
+     ],
+     "scale": 1.3,
+     "duration": 3.5
+    }
+   ],
+   "sfx": [
+    {
+     "sound": "air",
+     "at": 0.4,
+     "volume": 0.6
+    },
+    {
+     "sound": "air",
+     "at": 1.8,
+     "volume": 0.5
+    },
+    {
+     "sound": "amb machine",
+     "at": 3.6,
+     "volume": 0.5
+    }
+   ],
+   "ui": [
+    {
+     "type": "terminal",
+     "at": 4.6,
+     "until": 7.8,
+     "title": "FAKE RADIO NET",
+     "anchor": "right",
+     "lines": [
+      "> 'division' moving north",
+      "> 40 tanks at the river",
+      "> (none of it real)"
+     ],
+     "color": "#ffd166"
+    }
+   ]
+  },
+  {
+   "id": "s3-twist",
+   "environment": "hideout",
+   "timeOfDay": "night",
+   "look": "interior-warm",
+   "transition": "blink",
+   "transitionDuration": 0.5,
+   "camera": {
+    "shot": "medium",
+    "focus": [
+     0.4,
+     0,
+     -0.9
+    ],
+    "fov": 46,
+    "move": "push-in"
+   },
+   "narration": "Many were artists. Their story stayed classified for fifty years.",
+   "blocking": {
+    "jo": {
+     "at": [
+      0.4,
+      0,
+      -0.9
+     ],
+     "facing": 180,
+     "expression": "thinking"
+    }
+   },
+   "beats": [
+    {
+     "who": "jo",
+     "do": "work",
+     "at": 0.1,
+     "until": 2.6,
+     "facing": 180
+    },
+    {
+     "who": "jo",
+     "do": "surprised",
+     "at": 2.7,
+     "facing": 0,
+     "expression": "worried"
+    }
+   ],
+   "ui": [
+    {
+     "type": "alert",
+     "at": 2.6,
+     "until": 5,
+     "title": "CLASSIFIED",
+     "text": "for about 50 years",
+     "color": "#ff4d4d"
+    }
+   ],
+   "sfx": [
+    {
+     "sound": "impact heavy",
+     "at": 2.6,
+     "volume": 0.8,
+     "important": true
+    }
+   ]
+  },
+  {
+   "id": "s4-cta",
+   "environment": "park",
+   "timeOfDay": "dusk",
+   "look": "golden-hour",
+   "transition": "brush",
+   "transitionDuration": 0.5,
+   "camera": {
+    "shot": "medium",
+    "focus": [
+     -0.3,
+     0,
+     0
+    ],
+    "fov": 50
+   },
+   "narration": "Would you have believed it? Follow for more.",
+   "blocking": {
+    "sam": {
+     "at": [
+      -1.4,
+      0,
+      0.5
+     ],
+     "facing": 40,
+     "expression": "happy"
+    },
+    "riley": {
+     "at": [
+      1.6,
+      0,
+      0.7
+     ],
+     "facing": -40,
+     "expression": "excited"
+    }
+   },
+   "props": [
+    {
+     "kind": "tank",
+     "at": [
+      0.1,
+      0,
+      -0.6
+     ],
+     "scale": 0.8,
+     "inflate": {
+      "from": 1,
+      "to": 0.06,
+      "start": 0.4,
+      "end": 2.4
+     }
+    }
+   ],
+   "beats": [
+    {
+     "who": "sam",
+     "do": "shrug",
+     "at": 0.3
+    },
+    {
+     "who": "riley",
+     "do": "laugh",
+     "at": 0.5
+    }
+   ],
+   "sfx": [
+    {
+     "sound": "air",
+     "at": 0.4,
+     "volume": 0.7
+    }
+   ],
+   "text": [
+    {
+     "text": "FAKE TANKS. REAL WAR.",
+     "at": 1.4,
+     "until": 99,
+     "style": "title"
+    }
+   ]
+  }
+ ]
+}

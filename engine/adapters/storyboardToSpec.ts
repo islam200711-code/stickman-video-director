@@ -159,7 +159,7 @@ export function storyboardToSpec(input: StoryboardInput, assets: Assets): AdaptR
       id: shot.id, duration: dur,
       environment: {preset: shot.environment, palette: shot.palette, timeOfDay: shot.timeOfDay, ambient: shot.ambient},
       characters,
-      props: shot.props.map((p) => ({kind: p.kind, position: p.at, rotation: p.rotation, scale: p.scale, color: p.color, appearAt: p.appearAt !== undefined ? p.appearAt * scale : undefined, disappearAt: p.disappearAt !== undefined ? p.disappearAt * scale : undefined, move: p.move ? {...p.move, start: p.move.start * scale, end: p.move.end * scale} : undefined})),
+      props: shot.props.map((p) => ({kind: p.kind, position: p.at, rotation: p.rotation, scale: p.scale, color: p.color, appearAt: p.appearAt !== undefined ? p.appearAt * scale : undefined, disappearAt: p.disappearAt !== undefined ? p.disappearAt * scale : undefined, move: p.move ? {...p.move, start: p.move.start * scale, end: p.move.end * scale} : undefined, inflate: p.inflate ? {...p.inflate, start: p.inflate.start * scale, end: p.inflate.end * scale} : undefined})),
       camera,
       text: shot.text.map((x) => ({text: x.text, start: round(x.at * scale), end: round(Math.min(dur, (x.until ?? x.at + 2.5) * scale)), style: x.style, position: x.position})),
       narration: shot.narration ? {text: shot.narration, start: 0.25, audio: narr?.audio, duration: narr?.duration} : undefined,

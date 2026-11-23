@@ -63,7 +63,7 @@ const Block: React.FC<{p: Placement; children: React.ReactNode; style: React.CSS
 export const SceneOverlays: React.FC<{scene: Scene; style: Style; captions: boolean}> = ({scene, style, captions}) => {
   const {fps, width, height} = useVideoConfig();
   const t = useCurrentFrame() / fps;
-  const u = height / 720;
+  const u = Math.min(width, height) / 720; // scale text by the short side (9:16 safe)
   const plan = useMemo(() => planOverlays(scene, width, height, fps), [scene, width, height, fps]);
   const ci = captions && plan.caption ? plan.caption.chunks.findIndex((c) => t >= c.start && t < c.end) : -1;
   const cur = ci >= 0 ? plan.caption!.chunks[ci] : undefined;

@@ -56,6 +56,18 @@ export const PROPS: Record<string, React.FC<P>> = {
   map: ({color = '#efe2b8'}) => <mesh position={[0, 0.05, 0.1]} rotation={[-0.6, 0, 0]}><planeGeometry args={[0.4, 0.3]} /><meshStandardMaterial color={color} side={2} /></mesh>,
   stairs: ({color = '#bbb'}) => (<group>{Array.from({length: 5}).map((_, i) => <mesh key={i} position={[0, 0.1 + i * 0.2, -i * 0.3]} castShadow receiveShadow><boxGeometry args={[1.5, 0.2 + i * 0.4, 0.3]} /><M c={color} /></mesh>)}</group>),
   river: ({color = '#4aa3df'}) => <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[2.2, 30]} /><meshStandardMaterial color={color} roughness={0.2} /></mesh>,
+  tank: ({color = '#5f6b3a'}) => (<group>
+    <mesh position={[0, 0.55, 0]} castShadow><boxGeometry args={[3.0, 0.7, 1.7]} /><M c={color} /></mesh>
+    <mesh position={[0, 0.3, 0.92]} castShadow><boxGeometry args={[3.2, 0.5, 0.35]} /><M c="#2f3328" /></mesh>
+    <mesh position={[0, 0.3, -0.92]} castShadow><boxGeometry args={[3.2, 0.5, 0.35]} /><M c="#2f3328" /></mesh>
+    {[-1.2, -0.6, 0, 0.6, 1.2].flatMap((x) => [0.92, -0.92].map((z) => <mesh key={`${x}${z}`} position={[x, 0.28, z * 1.12]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.2, 0.2, 0.06, 12]} /><M c="#1f221c" /></mesh>))}
+    <mesh position={[-0.2, 1.15, 0]} castShadow><cylinderGeometry args={[0.62, 0.75, 0.5, 10]} /><M c={color} /></mesh>
+    <mesh position={[1.05, 1.18, 0]} rotation={[0, 0, Math.PI / 2]} castShadow><cylinderGeometry args={[0.08, 0.1, 1.9, 10]} /><M c={color} /></mesh>
+    <mesh position={[-0.2, 1.42, 0]}><cylinderGeometry args={[0.18, 0.2, 0.1, 10]} /><M c="#4c5530" /></mesh>
+    <mesh position={[-0.2, 0.92, 0.86]} rotation={[0, 0, 0]}><circleGeometry args={[0.22, 5]} /><meshBasicMaterial color="#f2f2f2" /></mesh>
+  </group>),
+  speaker: ({color = '#3d4148'}) => (<group><mesh position={[0, 0.6, 0]} castShadow><boxGeometry args={[0.9, 1.2, 0.8]} /><M c={color} /></mesh>
+    <mesh position={[0, 0.75, 0.41]}><circleGeometry args={[0.3, 20]} /><meshBasicMaterial color="#15171a" /></mesh><mesh position={[0, 0.3, 0.41]}><circleGeometry args={[0.14, 16]} /><meshBasicMaterial color="#15171a" /></mesh></group>),
   log: ({color = '#7a5230'}) => <mesh position={[0, 0.15, 0]} rotation={[0, 0, Math.PI / 2]} castShadow><cylinderGeometry args={[0.15, 0.15, 2.8, 10]} /><M c={color} /></mesh>,
 };
 
