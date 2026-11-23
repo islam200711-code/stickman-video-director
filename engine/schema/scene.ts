@@ -104,7 +104,7 @@ export const Narration = z.object({
 });
 
 export const Transition = z.object({
-  type: z.enum(['cut', 'fade', 'slide', 'wipe']).default('fade'),
+  type: z.enum(['cut', 'fade', 'slide', 'wipe', 'brush', 'fire', 'blink']).default('fade'),
   duration: z.number().min(0).default(0.5),
 });
 

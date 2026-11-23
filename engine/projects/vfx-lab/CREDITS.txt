@@ -1,0 +1,6 @@
+VFX lab
+
+Audio credits:
+- Impact Punch Heavy 000 (kenney-impact-impact-punch-heavy-000) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Impact Wood Heavy 000 (kenney-impact-impact-wood-heavy-000) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Swish 1 (artisticdude-swishes-swish-1) — Swishes Sound Pack — artisticdude (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.

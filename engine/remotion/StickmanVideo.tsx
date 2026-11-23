@@ -8,8 +8,9 @@ import {wipe} from '@remotion/transitions/wipe';
 import {VideoSpec, type VideoSpecInput} from '../schema/scene';
 import {resolveCast} from '../characters';
 import {SceneComp} from './SceneComp';
+import {brushWipe, fireWipe, blink} from '../vfx/transitions';
 
-const presentation = (type: string) => (type === 'slide' ? slide({direction: 'from-right'}) : type === 'wipe' ? wipe({direction: 'from-left'}) : fade());
+const presentation = (type: string) => (type === 'slide' ? slide({direction: 'from-right'}) : type === 'wipe' ? wipe({direction: 'from-left'}) : type === 'brush' ? brushWipe() : type === 'fire' ? fireWipe() : type === 'blink' ? blink() : fade());
 
 export const StickmanVideo: React.FC<{spec: VideoSpecInput}> = ({spec: raw}) => {
   const spec = VideoSpec.parse(raw);

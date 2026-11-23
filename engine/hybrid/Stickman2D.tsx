@@ -58,6 +58,8 @@ class Layer {
 }
 
 const matCache = new Map<string, THREE.MeshBasicMaterial>();
+const ghostCache = new Map<string, THREE.MeshBasicMaterial>();
+const ghostMat = (c: string, o: number) => {const k = c + o.toFixed(2); if (!ghostCache.has(k)) ghostCache.set(k, new THREE.MeshBasicMaterial({color: c, transparent: true, opacity: Math.max(0.05, o), depthWrite: false, side: THREE.DoubleSide, toneMapped: false})); return ghostCache.get(k)!;};
 const flat = (c: string) => {if (!matCache.has(c)) matCache.set(c, new THREE.MeshBasicMaterial({color: c, side: THREE.DoubleSide, toneMapped: false})); return matCache.get(c)!;};
 
 const LayerMesh: React.FC<{layer: Layer; color: string; order: number}> = ({layer, color, order}) => {
@@ -77,8 +79,8 @@ const MOUTH: Record<string, [number, number][]> = {
 
 export const Stickman2D: React.FC<{
   profile: CharacterProfile; frame: CharacterFrame; time: number; lineWidth?: number; gaze?: Vec3;
-  cameraPos: Vec3; mode: CharacterMode2D;
-}> = ({profile, frame: frame0, time, lineWidth = 1, gaze, cameraPos, mode}) => {
+  cameraPos: Vec3; mode: CharacterMode2D; ghost?: number;
+}> = ({profile, frame: frame0, time, lineWidth = 1, gaze, cameraPos, mode, ghost}) => {
   // --- gaze (same behaviour as Style C) ---
   let frame = frame0; let eyeLook = 0;
   const yaw = (frame0.facing * Math.PI) / 180;
@@ -208,6 +210,10 @@ export const Stickman2D: React.FC<{
   }, [time, frame, cameraPos[0], cameraPos[1], cameraPos[2], mode]);
 
   const ground = [frame.position[0], frame.position[2]] as [number, number];
+  if (ghost !== undefined) {
+    // motion-trail ghost: silhouette only, translucent, no face/shadow
+    return <mesh geometry={useMemo(() => layers.out.geometry(), [layers])} material={ghostMat(lighten(profile.color, 0.35), ghost)} renderOrder={1} frustumCulled={false} />;
+  }
   return (
     <group>
       <ContactShadow center={ground} lying={frame.pose.tilt !== 0} size={0.6 * s} />

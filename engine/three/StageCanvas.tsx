@@ -15,6 +15,7 @@ import {Html3DLabel} from './Label';
 import {Ambient, Birds, defaultAmbient} from './ambient';
 import {getLook} from './looks';
 import {Stickman2D} from '../hybrid/Stickman2D';
+import {Effects3D} from '../vfx/Effects3D';
 
 const MovingProp: React.FC<{p: Scene['props'][number]; t: number}> = ({p, t}) => {
   let pos = p.position; let roll = 0, wobble = 0;
@@ -75,6 +76,12 @@ export const StageCanvas: React.FC<{scene: Scene; cast: Record<string, Character
       {scene.props.filter((p) => (p.appearAt === undefined || t >= p.appearAt) && (p.disappearAt === undefined || t < p.disappearAt)).map((p, i) => (
         <MovingProp key={i} p={p} t={t} />
       ))}
+      <Effects3D events={scene.vfx} t={t} />
+      {mode !== 'stylized_3d' && scene.vfx.filter((e) => e.type === 'motion-trail' && e.actor && t >= e.at && t <= e.at + (e.duration ?? 0.3)).flatMap((e) => {
+        const ch = scene.characters.find((c) => c.id === e.actor); const profile = ch && cast[ch.profile ?? ch.id];
+        if (!ch || !profile) return [];
+        return [1, 2, 3].map((k) => <Stickman2D key={`${e.at}-${k}`} profile={profile} frame={evaluateCharacter(ch, t - k * 0.045, scene.duration)} time={t - k * 0.045} lineWidth={lineWidth} cameraPos={camNow.position} mode={mode} ghost={0.42 - k * 0.11} />);
+      })}
       {scene.characters.map((ch) => {
         const profile = cast[ch.profile ?? ch.id];
         if (!profile) throw new Error(`Scene ${scene.id}: character "${ch.id}" is not in the cast`);

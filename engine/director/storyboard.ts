@@ -86,7 +86,7 @@ export const Shot = z.object({
   actions: z.array(ActionEvent).default([]),
   vfx: z.array(z.object({type: z.string(), at: z.number(), position: Vec3.optional(), dir: Vec3.optional(), scale: z.number().default(1), color: z.string().optional(), duration: z.number().optional(), actor: z.string().optional()})).default([]),
   cameraImpacts: z.array(z.object({at: z.number(), strength: z.number().default(1)})).default([]),
-  transition: z.enum(['cut', 'fade', 'slide', 'wipe']).default('cut'),
+  transition: z.enum(['cut', 'fade', 'slide', 'wipe', 'brush', 'fire', 'blink']).default('cut'),
   transitionDuration: z.number().default(0.5),
 });
 export type Shot = z.infer<typeof Shot>;
