@@ -30,7 +30,7 @@ export const CUE_MAP: Record<string, string> = {
 };
 
 const SURFACE: Record<string, string> = {park: 'grass', forest: 'grass', cliff: 'grass', street: 'concrete', studio: 'concrete', office: 'carpet', 'living-room': 'wood', room: 'wood'};
-const AMBIENCE: Record<string, string> = {park: 'amb outdoor', forest: 'amb outdoor', cliff: 'amb outdoor', street: 'amb traffic', office: 'amb machine', 'living-room': 'none', room: 'none', studio: 'none'};
+const AMBIENCE: Record<string, string> = {'industrial-hall': 'amb industrial', 'control-room': 'amb machine', corridor: 'amb machine', ruins: 'amb outdoor', 'compound-night': 'amb outdoor', hideout: 'none',park: 'amb outdoor', forest: 'amb outdoor', cliff: 'amb outdoor', street: 'amb traffic', office: 'amb machine', 'living-room': 'none', room: 'none', studio: 'none'};
 export const surfaceFor = (env: string) => SURFACE[env] ?? (env.includes('industrial') || env.includes('lab') ? 'concrete' : 'concrete');
 export const ambienceFor = (env: string, tod: string) => (tod === 'night' && ['park', 'forest', 'cliff'].includes(env) ? 'amb rain night' : AMBIENCE[env] ?? (env.includes('industrial') || env.includes('lab') ? 'amb machine' : 'none'));
 

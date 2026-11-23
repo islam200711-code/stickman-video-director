@@ -12,7 +12,7 @@ export type AmbientKind = 'leaves' | 'dust' | 'fireflies' | 'petals' | 'none';
 const CFG: Record<Exclude<AmbientKind, 'none'>, {count: number; color: string; size: number; emissive: number; fall: number; area: [number, number, number]}> = {
   leaves: {count: 46, color: '#e0a23a', size: 0.07, emissive: 0.1, fall: 0.45, area: [16, 6, 10]},
   petals: {count: 60, color: '#ffb3c7', size: 0.05, emissive: 0.15, fall: 0.3, area: [16, 5, 10]},
-  dust: {count: 90, color: '#fff3d6', size: 0.012, emissive: 1.2, fall: -0.02, area: [10, 4, 6]},
+  dust: {count: 40, color: '#fff3d6', size: 0.008, emissive: 0.5, fall: -0.02, area: [10, 4, 6]},
   fireflies: {count: 50, color: '#d8ff7a', size: 0.03, emissive: 2.5, fall: 0, area: [16, 3, 10]},
 };
 
@@ -21,7 +21,7 @@ export const Ambient: React.FC<{kind: AmbientKind; t: number; seed?: number}> = 
     if (kind === 'none') return null;
     const c = CFG[kind], r = rng(seed);
     const geo = kind === 'leaves' || kind === 'petals' ? new THREE.PlaneGeometry(c.size * 1.6, c.size) : new THREE.SphereGeometry(c.size, 6, 4);
-    const mat = new THREE.MeshStandardMaterial({color: c.color, emissive: new THREE.Color(c.color), emissiveIntensity: c.emissive, side: THREE.DoubleSide, roughness: 0.8, transparent: kind === 'dust', opacity: kind === 'dust' ? 0.7 : 1});
+    const mat = new THREE.MeshStandardMaterial({color: c.color, emissive: new THREE.Color(c.color), emissiveIntensity: c.emissive, side: THREE.DoubleSide, roughness: 0.8, transparent: kind === 'dust', opacity: kind === 'dust' ? 0.35 : 1});
     const ps = Array.from({length: c.count}, () => ({x: (r() - 0.5) * c.area[0], y: r() * c.area[1], z: (r() - 0.5) * c.area[2] - 1, ph: r() * 10, sp: 0.6 + r() * 0.8}));
     return {geo, mat, ps, c};
   }, [kind, seed]);
@@ -62,4 +62,4 @@ export const Birds: React.FC<{t: number; seed?: number}> = ({t, seed = 5}) => {
     </mesh>))}</group>;
 };
 export const defaultAmbient = (preset: string, timeOfDay: string, indoor: boolean): AmbientKind =>
-  timeOfDay === 'night' ? (indoor ? 'dust' : 'fireflies') : indoor ? 'dust' : preset === 'park' ? 'petals' : preset === 'forest' || preset === 'cliff' ? 'leaves' : 'none';
+  timeOfDay === 'night' ? (indoor ? 'dust' : preset === 'compound-night' || preset === 'ruins' ? 'dust' : 'fireflies') : indoor ? 'dust' : preset === 'park' ? 'petals' : preset === 'forest' || preset === 'cliff' ? 'leaves' : preset === 'ruins' ? 'dust' : 'none';

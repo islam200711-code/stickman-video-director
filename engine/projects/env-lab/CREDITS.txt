@@ -1,0 +1,6 @@
+Env lab
+
+Audio credits:
+- sfx100v2 loop construction site (rubberduck-general-100-2-sfx100v2-loop-construction-site) — 100 CC0 SFX #2 - rubberduck (https://opengameart.org/content/100-cc0-sfx-2), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged. — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- sfx100v2 loop machine 02 (rubberduck-general-100-2-sfx100v2-loop-machine-02) — 100 CC0 SFX #2 - rubberduck (https://opengameart.org/content/100-cc0-sfx-2), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged. — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Amb Outdoor1 Loop (kresiek-amb-outside-amb-outdoor1-loop) — AMB Outside 1 — Kresiek The Furry (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.

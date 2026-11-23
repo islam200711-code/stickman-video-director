@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import {Car, Hydrant, Pond, Bench, Bookshelf, Building, Bush, Cloud, CoffeeTable, Fence, FloorLamp, Hills, mat, Mountains, PictureFrame, Planter, PottedPlant, Rug, Scatter, SkyDome, Sofa, StreetLamp, TrashBin, Tree, WallClock, Window} from './assets';
 import {SceneProp} from './props';
 import {getLook} from './looks';
+import {Antenna, Barrel, BrokenWall, BunkBed, Catwalk, ChainFence, Column, Console, Crate, Floodlight, HangingLamp, HazardFloor, Pipe, RuinShell, ServerRack, Tank, Warehouse} from './kits';
 
 type Pal = Record<string, string>;
 type TOD = 'day' | 'dusk' | 'night';
@@ -170,6 +171,120 @@ export const ENVIRONMENTS: Record<string, EnvDef> = {
       <WallClock p={[2.6, 3.3, -2.98]} />
       <group position={[-6.45, 0, 0.8]} rotation={[0, Math.PI / 2, 0]}><SceneProp kind="door" /></group>
       <pointLight position={[0, 4.6, 0.8]} intensity={10} distance={12} decay={1.4} color="#fff0d8" />
+    </>,
+  },
+
+  'industrial-hall': {
+    indoor: true, fog: [10, 45],
+    palette: {floor: '#6f7277', wall: '#4d555e', wall2: '#5c646d', accent: '#f2c230'},
+    sky: () => ({top: '#20262d', horizon: '#2c333b'}),
+    build: (p) => <>
+      <Ground c={p.floor} />
+      <hemisphereLight args={['#9fb0c4', '#3a3a3a', 0.6]} />
+      <HazardFloor p={[0, 0, 1.6]} w={14} d={0.35} />
+      <Box p={[0, 5, -6]} s={[40, 10, 0.3]} c={p.wall} rough={0.9} />
+      {Array.from({length: 40}, (_, i) => <mesh key={i} position={[-20 + i, 5, -5.84]} material={mat(p.wall2, {rough: 0.9})}><planeGeometry args={[0.12, 10]} /></mesh>)}
+      <Box p={[-12, 5, 0]} s={[0.3, 10, 14]} c={p.wall} rough={0.9} />
+      {[-8, -3, 3, 8].map((x) => <Column key={x} p={[x, 0, -4.6]} h={8} />)}
+      <Catwalk p={[0, 0, -3.8]} length={18} y={3.6} />
+      <Tank p={[-9, 0, -3.2]} r={1.3} h={5} />
+      <Tank p={[10, 0, -3.4]} r={1.1} h={4.4} color="#a3906f" />
+      <Pipe from={[-12, 6.5, -5.6]} to={[12, 6.5, -5.6]} r={0.22} />
+      <Pipe from={[-12, 5.8, -5.5]} to={[12, 5.8, -5.5]} r={0.12} color="#8a5a3c" />
+      <Pipe from={[6, 0, -5.4]} to={[6, 6.5, -5.4]} r={0.16} />
+      {[[-5.5, -2.2, 0], [-4.7, -2.4, 0.4], [-5.1, -2.3, 0]].map(([x, z, r], i) => <Crate key={i} p={[x, i === 2 ? 0.8 : 0, z]} r={r} />)}
+      {[[4.2, -2.4], [4.9, -2.1], [4.5, -1.6]].map(([x, z], i) => <Barrel key={i} p={[x, 0, z]} color={i % 2 ? '#a0392f' : '#2f6fa0'} />)}
+      {[-6, 0, 6].map((x) => <HangingLamp key={x} p={[x, 7.4, -1]} intensity={7} />)}
+      <Scatter kind="pebble" count={40} x={[-10, 10]} z={[-3, 3]} seed={31} color="#7a7570" />
+    </>,
+  },
+  'control-room': {
+    indoor: true, fog: [12, 40],
+    palette: {floor: '#3a4148', wall: '#2c343c', panel: '#36404a', screen: '#3dff8a'},
+    sky: () => ({top: '#121820', horizon: '#18202a'}),
+    build: (p) => <>
+      <Ground c={p.floor} />
+      <Box p={[0, 3, -3.6]} s={[20, 6, 0.2]} c={p.wall} rough={0.8} />
+      <Box p={[-6.5, 3, 0]} s={[0.2, 6, 10]} c={p.wall} rough={0.8} />
+      {Array.from({length: 6}, (_, i) => <mesh key={i} position={[-5 + i * 2, 3.4, -3.46]} material={mat(i % 3 === 1 ? p.screen : '#1e8bd0', {emissive: 0.9})}><planeGeometry args={[1.7, 1.0]} /></mesh>)}
+      <mesh position={[0, 3.4, -3.49]} material={mat('#0b1a12', {emissive: 0.1})}><planeGeometry args={[12.4, 1.3]} /></mesh>
+      <Console p={[-1.2, 0, -2.2]} screens={4} screen={p.screen} />
+      <Console p={[3.6, 0, -1.4]} r={-0.6} screens={2} screen="#4fc3ff" />
+      {[-5.6, -4.8].map((x, i) => <ServerRack key={x} p={[x, 0, -2.6]} seed={i + 3} />)}
+      <ServerRack p={[5.6, 0, -2.8]} seed={9} />
+      <Pipe from={[-6.4, 5.4, -3.4]} to={[6, 5.4, -3.4]} r={0.1} />
+      {[-3, 2].map((x) => <HangingLamp key={x} p={[x, 5.6, 0]} color="#d8f0ff" intensity={4} />)}
+    </>,
+  },
+  corridor: {
+    indoor: true, fog: [6, 34],
+    palette: {floor: '#5b6066', wall: '#6e757c', trim: '#f2c230', light: '#e9f4ff'},
+    sky: () => ({top: '#1c2127', horizon: '#20262c'}),
+    build: (p) => <>
+      <Ground c={p.floor} />
+      {/* long hall along -z: two side walls, ceiling, repeating ribs and lights for depth */}
+      <Box p={[-2.2, 2, -15]} s={[0.2, 4, 40]} c={p.wall} rough={0.9} />
+      <Box p={[2.2, 2, -15]} s={[0.2, 4, 40]} c={p.wall} rough={0.9} />
+      <Box p={[0, 4.05, -15]} s={[4.6, 0.1, 40]} c="#3b4148" rough={0.9} />
+      {Array.from({length: 12}, (_, i) => <group key={i} position={[0, 0, 3 - i * 3.2]}>
+        <Box p={[-2.05, 2, 0]} s={[0.15, 4, 0.3]} c="#4b5259" /><Box p={[2.05, 2, 0]} s={[0.15, 4, 0.3]} c="#4b5259" />
+        <mesh position={[0, 3.98, 0]} rotation={[Math.PI / 2, 0, 0]} material={mat(p.light, {emissive: 1.8})}><planeGeometry args={[1.2, 0.18]} /></mesh>
+        {i % 3 === 0 && <pointLight position={[0, 3.6, 0]} intensity={3} distance={7} decay={1.6} color={p.light} />}
+      </group>)}
+      <Pipe from={[-1.8, 3.6, 4]} to={[-1.8, 3.6, -34]} r={0.1} />
+      <Pipe from={[1.7, 3.7, 4]} to={[1.7, 3.7, -34]} r={0.07} color="#8a5a3c" />
+      <mesh position={[0, 0.007, -15]} rotation={[-Math.PI / 2, 0, 0]} material={mat(p.trim, {rough: 0.8})}><planeGeometry args={[0.08, 40]} /></mesh>
+    </>,
+  },
+  ruins: {
+    palette: {ground: '#5f5a54', rubble: '#7a736a', shell: '#7d756b', skyTop: '#6f7c88', sky: '#b9b2a6'},
+    sky: outdoorSky, fog: [14, 90],
+    build: (p, tod) => <>
+      <Ground c={p.ground} />
+      {[[-10, -9, 7, 10, 1], [-2, -12, 6, 12, 2], [7, -9, 8, 8, 3], [15, -13, 6, 13, 4], [-17, -14, 7, 11, 5]].map(([x, z, w, h, sd]) => <RuinShell key={sd} p={[x, 0, z]} w={w} h={h} seed={sd} color={['#7d756b', '#6e6862', '#8a7f70', '#5f5b57', '#77706a'][sd % 5]} />)}
+      <BrokenWall p={[-4.5, 0, -3.2]} w={4} h={2.2} seed={8} color={p.shell} />
+      <BrokenWall p={[5.5, 0, -2.8]} w={3} h={1.6} seed={9} color={p.shell} />
+      <Scatter kind="pebble" count={160} x={[-16, 16]} z={[-8, 5]} seed={12} color={p.rubble} />
+      <group position={[8.5, 0, 0.8]} rotation={[0, 0.4, 0.15]}><Box p={[0, 0.5, 0]} s={[3.2, 0.7, 1.5]} c="#4a3a33" /><Box p={[-0.2, 1.05, 0]} s={[1.8, 0.5, 1.4]} c="#3a2e29" /></group>
+      <Mountains z={-70} color="#9a958e" count={8} h={14} spread={160} />
+    </>,
+  },
+  'compound-night': {
+    palette: {ground: '#4a5158', skyTop: '#121a38', sky: '#34416b', building: '#7a8696'},
+    sky: (p, tod) => tod === 'day' ? {top: '#7f9bb5', horizon: '#c8d4de'} : {top: p.skyTop, horizon: p.sky}, fog: [16, 80],
+    build: (p, tod) => <>
+      <Ground c={p.ground} />
+      {tod !== 'day' && <><hemisphereLight args={['#6f86c8', '#2a2f3a', 0.9]} /><pointLight position={[0, 6, -6]} intensity={14} distance={22} decay={1.4} color="#ffe2a8" /></>}
+      <Warehouse p={[0, 0, -12]} w={16} h={7.5} d={8} color={p.building} />
+      <Tank p={[-12, 0, -10]} r={1.6} h={7} color="#7b8590" />
+      <Tank p={[-15.5, 0, -11]} r={1.3} h={6} color="#7b8590" />
+      <Antenna p={[8.5, 0, -8]} h={11} />
+      <ChainFence p={[0, 0, -4.5]} length={14} />
+      <ChainFence p={[-11, 0, -4.5]} length={5} />
+      <ChainFence p={[11, 0, -4.5]} length={5} />
+      <Floodlight p={[-6, 0, -5]} on={tod !== 'day'} />
+      <Floodlight p={[6.5, 0, -5]} on={tod !== 'day'} r={-0.2} />
+      <Scatter kind="pebble" count={60} x={[-14, 14]} z={[-4, 5]} seed={44} color="#5a5f64" />
+      <Mountains z={-70} color="#1e2540" count={9} h={16} spread={180} />
+    </>,
+  },
+  hideout: {
+    indoor: true, fog: [12, 40],
+    palette: {floor: '#7a6a58', wall: '#8b8378', wall2: '#a39782', rug: '#9c4a3a'},
+    sky: () => ({top: '#2a241f', horizon: '#3a3129'}),
+    build: (p, tod) => <>
+      <Ground c={p.floor} />
+      <Box p={[0, 3, -3.2]} s={[16, 6, 0.3]} c={p.wall} rough={0.95} />
+      <Box p={[-6, 3, 0]} s={[0.3, 6, 10]} c={p.wall} rough={0.95} />
+      <Box p={[0, 0.5, -3.0]} s={[16, 1.0, 0.1]} c={p.wall2} rough={0.95} />
+      <Rug p={[0.4, 0, -0.4]} w={3.4} d={2.2} color={p.rug} border="#d9c49a" />
+      <BunkBed p={[-4.6, 0, -2.3]} />
+      <group position={[0.6, 0, -1.6]}><SceneProp kind="desk" color="#8a6a48" /></group>
+      <mesh position={[0.6, 0.78, -1.6]} rotation={[-Math.PI / 2, 0, 0.1]} material={mat('#e8dcb5', {rough: 1})}><planeGeometry args={[0.9, 0.6]} /></mesh>
+      <Bookshelf p={[4.4, 0, -2.85]} seed={21} />
+      <Crate p={[3.2, 0, -2.4]} s={0.8} />
+      <HangingLamp p={[0.6, 4.6, -1]} color="#ffcf8a" intensity={6} />
+      <Window p={[-2.2, 2.6, -3.04]} w={1.4} h={0.9} sky={tod === 'night' ? '#1f2a4a' : '#bfe6ff'} />
     </>,
   },
 };

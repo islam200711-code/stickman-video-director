@@ -1,0 +1,229 @@
+{
+ "id": "env-lab",
+ "title": "Env lab",
+ "brief": {
+  "category": "engine-test",
+  "topic": "env test",
+  "fps": 24
+ },
+ "cast": [
+  "sam",
+  "riley"
+ ],
+ "captions": false,
+ "style": {
+  "characterMode": "flat_2d"
+ },
+ "shots": [
+  {
+   "id": "industrial-hall",
+   "environment": "industrial-hall",
+   "timeOfDay": "day",
+   "look": "dramatic",
+   "duration": 2,
+   "camera": {
+    "shot": "wide",
+    "focus": [
+     0,
+     0,
+     0
+    ]
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.9,
+      0,
+      0.6
+     ],
+     "facing": 30,
+     "expression": "determined"
+    },
+    "riley": {
+     "at": [
+      0.9,
+      0,
+      0.4
+     ],
+     "facing": -30,
+     "expression": "worried"
+    }
+   }
+  },
+  {
+   "id": "control-room",
+   "environment": "control-room",
+   "timeOfDay": "day",
+   "look": "interior-cool",
+   "duration": 2,
+   "camera": {
+    "shot": "wide",
+    "focus": [
+     0,
+     0,
+     0
+    ]
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.9,
+      0,
+      0.6
+     ],
+     "facing": 30,
+     "expression": "determined"
+    },
+    "riley": {
+     "at": [
+      0.9,
+      0,
+      0.4
+     ],
+     "facing": -30,
+     "expression": "worried"
+    }
+   }
+  },
+  {
+   "id": "corridor",
+   "environment": "corridor",
+   "timeOfDay": "day",
+   "look": "tension",
+   "duration": 2,
+   "camera": {
+    "shot": "wide",
+    "focus": [
+     0,
+     0,
+     0
+    ]
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.9,
+      0,
+      0.6
+     ],
+     "facing": 30,
+     "expression": "determined"
+    },
+    "riley": {
+     "at": [
+      0.9,
+      0,
+      0.4
+     ],
+     "facing": -30,
+     "expression": "worried"
+    }
+   }
+  },
+  {
+   "id": "ruins",
+   "environment": "ruins",
+   "timeOfDay": "day",
+   "look": "overcast",
+   "duration": 2,
+   "camera": {
+    "shot": "wide",
+    "focus": [
+     0,
+     0,
+     0
+    ]
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.9,
+      0,
+      0.6
+     ],
+     "facing": 30,
+     "expression": "determined"
+    },
+    "riley": {
+     "at": [
+      0.9,
+      0,
+      0.4
+     ],
+     "facing": -30,
+     "expression": "worried"
+    }
+   }
+  },
+  {
+   "id": "compound-night",
+   "environment": "compound-night",
+   "timeOfDay": "night",
+   "look": "moody-night",
+   "duration": 2,
+   "camera": {
+    "shot": "wide",
+    "focus": [
+     0,
+     0,
+     0
+    ]
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.9,
+      0,
+      0.6
+     ],
+     "facing": 30,
+     "expression": "determined"
+    },
+    "riley": {
+     "at": [
+      0.9,
+      0,
+      0.4
+     ],
+     "facing": -30,
+     "expression": "worried"
+    }
+   }
+  },
+  {
+   "id": "hideout",
+   "environment": "hideout",
+   "timeOfDay": "night",
+   "look": "interior-warm",
+   "duration": 2,
+   "camera": {
+    "shot": "wide",
+    "focus": [
+     0,
+     0,
+     0
+    ]
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.9,
+      0,
+      0.6
+     ],
+     "facing": 30,
+     "expression": "determined"
+    },
+    "riley": {
+     "at": [
+      0.9,
+      0,
+      0.4
+     ],
+     "facing": -30,
+     "expression": "worried"
+    }
+   }
+  }
+ ]
+}
