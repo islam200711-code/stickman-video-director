@@ -1,0 +1,7 @@
+{
+  "name": "stickman-local",
+  "owner": {"name": "stickman-video-director"},
+  "plugins": [
+    {"name": "growkaz-stickman", "source": "./growkaz-stickman", "description": "GrowKaz Stickman Studio (user-supplied plugin, v1.1.0)"}
+  ]
+}

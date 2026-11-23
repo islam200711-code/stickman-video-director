@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "stickman-local": {
+      "source": {
+        "source": "directory",
+        "path": "/home/user/stickman-video-director/plugins"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "growkaz-stickman@stickman-local": true
+  }
+}
