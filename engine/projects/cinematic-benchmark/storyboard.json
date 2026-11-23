@@ -1,0 +1,574 @@
+{
+ "id": "cinematic-benchmark",
+ "title": "The Unexpected Delivery \u2014 cinematic benchmark",
+ "brief": {
+  "category": "engine-benchmark (neutral)",
+  "topic": "cinematic storytelling benchmark",
+  "language": "en",
+  "tone": "warm, playful",
+  "targetDuration": 30,
+  "fps": 24
+ },
+ "cast": [
+  "sam",
+  "riley",
+  "jo"
+ ],
+ "voice": {
+  "provider": "espeak",
+  "rate": 165
+ },
+ "music": {
+  "query": "warm calm hopeful",
+  "volume": 0.1
+ },
+ "captions": true,
+ "shots": [
+  {
+   "id": "c1-meet",
+   "purpose": "establish + dialogue",
+   "environment": "park",
+   "look": "natural",
+   "duration": 8,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "narration": "Sam and Riley meet in the park, like every morning.",
+   "blocking": {
+    "sam": {
+     "at": [
+      -5,
+      0,
+      0.7
+     ],
+     "facing": 90,
+     "expression": "happy"
+    },
+    "riley": {
+     "at": [
+      1.3,
+      0,
+      0.3
+     ],
+     "facing": -70,
+     "expression": "happy"
+    }
+   },
+   "beats": [
+    {
+     "who": "sam",
+     "do": "walk",
+     "at": 0,
+     "until": 2.3,
+     "to": [
+      -0.6,
+      0,
+      0.7
+     ],
+     "event": "enter"
+    },
+    {
+     "who": "sam",
+     "do": "wave",
+     "at": 2.3,
+     "facing": 80,
+     "expression": "happy"
+    },
+    {
+     "who": "riley",
+     "do": "talk",
+     "at": 3.0,
+     "until": 4.9,
+     "expression": "excited"
+    },
+    {
+     "who": "sam",
+     "do": "talk",
+     "at": 5.0,
+     "until": 6.6,
+     "facing": 75,
+     "expression": "happy"
+    },
+    {
+     "who": "riley",
+     "do": "nod",
+     "at": 5.0,
+     "until": 6.6
+    },
+    {
+     "who": "riley",
+     "do": "idle",
+     "at": 6.7,
+     "expression": "scared",
+     "lookAt": [
+      0.4,
+      4.5,
+      0
+     ]
+    }
+   ],
+   "text": [
+    {
+     "text": "The Unexpected Delivery",
+     "at": 0.2,
+     "until": 2.4,
+     "style": "title"
+    }
+   ],
+   "sfx": [
+    {
+     "sound": "footstep grass",
+     "at": 0.4,
+     "volume": 0.4
+    },
+    {
+     "sound": "footstep grass",
+     "at": 1.2,
+     "volume": 0.4
+    }
+   ]
+  },
+  {
+   "id": "c2-crate",
+   "purpose": "impact + effort",
+   "environment": "park",
+   "look": "natural",
+   "duration": 8.5,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "narration": "Out of nowhere, a heavy crate drops from the sky.",
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.9,
+      0,
+      0.75
+     ],
+     "facing": 80,
+     "expression": "happy"
+    },
+    "riley": {
+     "at": [
+      -2.1,
+      0,
+      -0.45
+     ],
+     "facing": 80,
+     "expression": "worried"
+    }
+   },
+   "props": [
+    {
+     "kind": "crate",
+     "at": [
+      0.25,
+      5,
+      0.1
+     ],
+     "scale": 1.3,
+     "disappearAt": 5.0,
+     "move": {
+      "to": [
+       0.25,
+       0,
+       0.1
+      ],
+      "start": 0.3,
+      "end": 1.25,
+      "weight": "drop"
+     }
+    },
+    {
+     "kind": "crate",
+     "at": [
+      0.25,
+      0,
+      0.1
+     ],
+     "scale": 1.3,
+     "appearAt": 5.0,
+     "move": {
+      "to": [
+       2.95,
+       0,
+       0.1
+      ],
+      "start": 5.0,
+      "end": 8.5,
+      "weight": "heavy"
+     }
+    }
+   ],
+   "beats": [
+    {
+     "who": "sam",
+     "do": "surprised",
+     "at": 1.3,
+     "expression": "surprised"
+    },
+    {
+     "who": "riley",
+     "do": "crouch",
+     "at": 1.35,
+     "until": 2.6,
+     "expression": "scared"
+    },
+    {
+     "who": "sam",
+     "do": "think",
+     "at": 2.4,
+     "expression": "thinking"
+    },
+    {
+     "who": "sam",
+     "do": "point",
+     "at": 3.4,
+     "facing": 75,
+     "expression": "determined",
+     "event": "emphasis"
+    },
+    {
+     "who": "riley",
+     "do": "idle",
+     "at": 2.7,
+     "expression": "worried",
+     "lookAtCharacter": "sam"
+    },
+    {
+     "who": "sam",
+     "do": "push",
+     "at": 5.0,
+     "until": 8.5,
+     "to": [
+      1.9,
+      0,
+      0.75
+     ],
+     "moveCurve": "heavy",
+     "facing": 90,
+     "expression": "determined",
+     "reach": {
+      "left": [
+       -0.26,
+       0.8,
+       0.98
+      ],
+      "right": [
+       -0.26,
+       0.8,
+       0.62
+      ]
+     }
+    },
+    {
+     "who": "riley",
+     "do": "push",
+     "at": 5.0,
+     "until": 8.5,
+     "to": [
+      1.85,
+      0,
+      -0.55
+     ],
+     "moveCurve": "heavy",
+     "facing": 90,
+     "expression": "determined",
+     "reach": {
+      "left": [
+       -0.26,
+       0.8,
+       -0.32
+      ],
+      "right": [
+       -0.26,
+       0.8,
+       -0.7
+      ]
+     }
+    },
+    {
+     "who": "riley",
+     "do": "walk",
+     "at": 4.0,
+     "until": 4.95,
+     "to": [
+      -0.95,
+      0,
+      -0.55
+     ],
+     "facing": 80
+    }
+   ],
+   "sfx": [
+    {
+     "sound": "impact heavy",
+     "at": 1.25,
+     "volume": 0.9
+    },
+    {
+     "sound": "whoosh swish",
+     "at": 0.6,
+     "volume": 0.5
+    },
+    {
+     "sound": "impact wood heavy",
+     "at": 5.3,
+     "volume": 0.5
+    },
+    {
+     "sound": "stones",
+     "at": 6.2,
+     "volume": 0.6
+    }
+   ]
+  },
+  {
+   "id": "c3-home",
+   "purpose": "reveal",
+   "environment": "living-room",
+   "look": "interior-warm",
+   "duration": 7,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "transition": "fade",
+   "transitionDuration": 0.5,
+   "narration": "Back home, Jo asks the only question that matters. What is inside?",
+   "blocking": {
+    "sam": {
+     "at": [
+      -1.35,
+      0,
+      0.4
+     ],
+     "facing": 55,
+     "expression": "happy"
+    },
+    "riley": {
+     "at": [
+      1.55,
+      0,
+      0.5
+     ],
+     "facing": -55,
+     "expression": "happy"
+    },
+    "jo": {
+     "at": [
+      5.2,
+      0,
+      1.2
+     ],
+     "facing": -90,
+     "expression": "confused"
+    }
+   },
+   "props": [
+    {
+     "kind": "crate",
+     "at": [
+      0.15,
+      0,
+      -0.5
+     ],
+     "scale": 1.15
+    },
+    {
+     "kind": "ball",
+     "at": [
+      0.15,
+      0.85,
+      -0.5
+     ],
+     "scale": 1.6,
+     "color": "#ffcf3a",
+     "appearAt": 4.6,
+     "move": {
+      "to": [
+       0.15,
+       1.25,
+       -0.5
+      ],
+      "start": 4.6,
+      "end": 5.3,
+      "weight": "light"
+     }
+    }
+   ],
+   "beats": [
+    {
+     "who": "jo",
+     "do": "walk",
+     "at": 0,
+     "until": 1.8,
+     "to": [
+      0.3,
+      0,
+      1.35
+     ],
+     "event": "enter"
+    },
+    {
+     "who": "jo",
+     "do": "talk",
+     "at": 1.9,
+     "until": 3.6,
+     "facing": -160,
+     "expression": "confused"
+    },
+    {
+     "who": "riley",
+     "do": "shrug",
+     "at": 2.2,
+     "until": 3.6
+    },
+    {
+     "who": "sam",
+     "do": "crouch",
+     "at": 3.6,
+     "until": 4.6,
+     "facing": 40,
+     "lookAt": [
+      0.15,
+      0.9,
+      -0.5
+     ]
+    },
+    {
+     "who": "sam",
+     "do": "surprised",
+     "at": 4.7,
+     "expression": "excited",
+     "event": "reveal"
+    },
+    {
+     "who": "jo",
+     "do": "celebrate",
+     "at": 4.9,
+     "expression": "excited"
+    },
+    {
+     "who": "riley",
+     "do": "clap",
+     "at": 5.0,
+     "expression": "excited"
+    }
+   ],
+   "sfx": [
+    {
+     "sound": "door",
+     "at": 0.3,
+     "volume": 0.5
+    },
+    {
+     "sound": "jingles pizzicato payoff",
+     "at": 4.7,
+     "volume": 0.6
+    }
+   ]
+  },
+  {
+   "id": "c4-sunset",
+   "purpose": "payoff",
+   "environment": "cliff",
+   "timeOfDay": "dusk",
+   "look": "golden-hour",
+   "duration": 7,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "transition": "fade",
+   "transitionDuration": 0.6,
+   "narration": "Some surprises are better when they are shared.",
+   "blocking": {
+    "sam": {
+     "at": [
+      -1.1,
+      0,
+      0.8
+     ],
+     "facing": 15,
+     "expression": "happy"
+    },
+    "riley": {
+     "at": [
+      0,
+      0,
+      0.5
+     ],
+     "facing": 0,
+     "expression": "happy"
+    },
+    "jo": {
+     "at": [
+      1.1,
+      0,
+      0.8
+     ],
+     "facing": -15,
+     "expression": "happy"
+    }
+   },
+   "props": [
+    {
+     "kind": "ball",
+     "at": [
+      0,
+      0,
+      1.6
+     ],
+     "scale": 1.6,
+     "color": "#ffcf3a"
+    }
+   ],
+   "beats": [
+    {
+     "who": "riley",
+     "do": "talk",
+     "at": 1.8,
+     "until": 3.6,
+     "expression": "happy"
+    },
+    {
+     "who": "sam",
+     "do": "laugh",
+     "at": 3.8,
+     "expression": "excited"
+    },
+    {
+     "who": "jo",
+     "do": "celebrate",
+     "at": 3.9,
+     "expression": "excited"
+    },
+    {
+     "who": "riley",
+     "do": "thumbsup",
+     "at": 4.0,
+     "expression": "smug",
+     "event": "emphasis"
+    }
+   ],
+   "text": [
+    {
+     "text": "Small mysteries. Big adventures.",
+     "at": 4.6,
+     "until": 7,
+     "style": "title"
+    }
+   ],
+   "sfx": [
+    {
+     "sound": "jingles hit payoff",
+     "at": 4.0,
+     "volume": 0.6
+    }
+   ]
+  }
+ ]
+}

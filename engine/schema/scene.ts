@@ -34,6 +34,8 @@ export const ActionCue = z.object({
   facing: z.number().optional(),       // yaw in degrees, 0 = towards camera, 90 = screen right
   to: Vec3.optional(),                 // locomotion target; position is eased start -> to
   target: Vec3.optional(),             // point / look target (world space)
+  lookAtCharacter: z.string().optional(), // head/eyes track another character
+  moveCurve: z.enum(['smooth', 'heavy', 'light']).optional(), // travel curve; match a pushed prop's weight so hands stay on it
   reach: z.object({left: Vec3.optional(), right: Vec3.optional()}).optional(), // IK hand targets (world space)
   prop: z.string().optional(),         // prop held in right hand
 });
@@ -55,10 +57,13 @@ export const CameraKey = z.object({
   position: Vec3,
   lookAt: Vec3,
   fov: z.number().default(40),
+  cut: z.boolean().default(false),     // hard cut to this key (no interpolation from the previous one)
+  label: z.string().optional(),        // shot name from auto-coverage, e.g. "close:sam"
 });
 export const Camera = z.object({
   keys: z.array(CameraKey).min(1),
   shake: z.number().min(0).default(0),
+  impacts: z.array(z.object({t: z.number(), strength: z.number().default(1)})).default([]), // decaying shake bursts
   ease: z.enum(['linear', 'inOut']).default('inOut'),
 });
 export type Camera = z.infer<typeof Camera>;
@@ -70,7 +75,8 @@ export const Prop = z.object({
   scale: z.number().default(1),
   color: z.string().optional(),
   appearAt: z.number().optional(),
-  move: z.object({to: Vec3, start: z.number(), end: z.number(), roll: z.boolean().default(false)}).optional(),
+  disappearAt: z.number().optional(),
+  move: z.object({to: Vec3, start: z.number(), end: z.number(), roll: z.boolean().default(false), weight: z.enum(['smooth', 'heavy', 'light', 'drop']).default('smooth')}).optional(),
 });
 export type Prop = z.infer<typeof Prop>;
 
@@ -79,7 +85,7 @@ export const TextOverlay = z.object({
   start: z.number(),
   end: z.number(),
   style: z.enum(['title', 'caption', 'label', 'lower-third']).default('label'),
-  position: z.enum(['top', 'center', 'bottom']).default('top'),
+  position: z.enum(['auto', 'top', 'center', 'bottom']).default('auto'), // auto = safe-zone placement away from characters
 });
 
 export const SfxCue = z.object({file: z.string(), at: z.number(), volume: z.number().default(0.8)});
@@ -100,6 +106,7 @@ export const Environment = z.object({
   preset: z.string(),                  // registry key in three/environments.tsx
   palette: z.record(z.string()).optional(),
   timeOfDay: z.enum(['day', 'dusk', 'night']).default('day'),
+  ambient: z.enum(['auto', 'none', 'leaves', 'dust', 'fireflies', 'petals']).default('auto'),
 });
 
 export const Scene = z.object({
@@ -113,6 +120,7 @@ export const Scene = z.object({
   narration: Narration.optional(),
   sfx: z.array(SfxCue).default([]),
   transitionIn: Transition.default({type: 'cut', duration: 0}),
+  look: z.string().default('natural'),  // lighting + depth + grade preset (three/looks.ts)
 });
 export type Scene = z.infer<typeof Scene>;
 
@@ -132,6 +140,7 @@ export const Format = z.object({
   aspect: z.enum(['16:9', '9:16']).default('16:9'),
   quality: z.enum(['720p', '1080p']).default('720p'),
   fps: z.number().int().default(24),
+  render: z.object({shadowMap: z.number().int().default(1024), msaa: z.boolean().default(true), softShadows: z.boolean().default(true)}).default({}),
 });
 
 export const Style = z.object({

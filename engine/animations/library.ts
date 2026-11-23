@@ -17,6 +17,7 @@
  * momentum-driven lean from locomotion acceleration, eased cross-fades between cues.
  */
 import type {Action, Expression, SceneCharacter, Vec3} from '../schema/scene';
+import {propMotion} from './weight';
 
 export type HandShape = 'relaxed' | 'fist' | 'point' | 'open' | 'thumb';
 export type Limb = {fwd: number; out: number; bend: number};
@@ -184,7 +185,40 @@ export type CharacterFrame = {
   pose: Pose; position: Vec3; facing: number; expression: Expression; talking: boolean; prop?: string; action: Action;
   reach?: {left?: Vec3; right?: Vec3; weight: number};
   lookAt?: Vec3;
+  lookAtCharacter?: string;
+  /** facial cross-fade: previous expression and blend 0..1 towards `expression` */
+  exprFrom: Expression; exprK: number;
+  /** emphasis of emotion 0..1 (used by face + camera) */
+  emotion: number;
 };
+
+/**
+ * Emotional body language: an additive posture layer per expression, so the
+ * whole body acts the feeling (not only the face). Scaled down during locomotion.
+ */
+type Body = (t: number) => PoseOver;
+const BODY: Partial<Record<Expression, Body>> = {
+  happy: (t) => ({lean: -0.03, headPitch: -0.05, y: 0.006 * Math.sin(t * 3.2)}),
+  excited: (t) => ({lean: -0.05, headPitch: -0.09, y: 0.018 * Math.abs(Math.sin(t * 5))}),
+  sad: () => ({lean: 0.11, headPitch: 0.2, y: -0.02, lArm: {out: 0.05}, rArm: {out: 0.05}}),
+  angry: (t) => ({lean: 0.12, headPitch: 0.07, side: 0.01 * Math.sin(t * 9), lHand: 'fist', rHand: 'fist'}),
+  scared: (t) => ({lean: -0.13, y: -0.035, headPitch: 0.05, headRoll: 0.012 * Math.sin(t * 31), lArm: {fwd: 0.45, bend: 1.1}, rArm: {fwd: 0.45, bend: 1.1}, lHand: 'open', rHand: 'open'}),
+  surprised: () => ({lean: -0.08, headPitch: -0.1}),
+  thinking: (t) => ({headRoll: 0.1, headPitch: -0.06 + 0.02 * Math.sin(t * 1.1)}),
+  worried: (t) => ({headPitch: 0.09, lean: 0.03, side: 0.012 * Math.sin(t * 2.3), lArm: {fwd: 0.2, bend: 0.5}, rArm: {fwd: 0.2, bend: 0.5}}),
+  determined: () => ({lean: 0.06, headPitch: 0.05, lHand: 'fist', rHand: 'fist'}),
+  confused: () => ({headRoll: 0.2, side: 0.03}),
+  smug: () => ({lean: -0.06, headPitch: -0.09, headRoll: -0.08}),
+};
+const STRONG = new Set<Expression>(['surprised', 'scared', 'angry', 'excited', 'sad']);
+function addBody(p: Pose, o: PoseOver, w: number): Pose {
+  if (w <= 0) return p;
+  const n = (k: 'y' | 'lean' | 'side' | 'twist' | 'headPitch' | 'headYaw' | 'headRoll') => p[k] + ((o[k] as number | undefined) ?? 0) * w;
+  const limb = (a: Limb, b?: Partial<Limb>): Limb => ({fwd: a.fwd + (b?.fwd ?? 0) * w, out: a.out + (b?.out ?? 0) * w, bend: a.bend + (b?.bend ?? 0) * w});
+  return {...p, y: n('y'), lean: n('lean'), side: n('side'), twist: n('twist'), headPitch: n('headPitch'), headYaw: n('headYaw'), headRoll: n('headRoll'),
+    lArm: limb(p.lArm, o.lArm), rArm: limb(p.rArm, o.rArm), lLeg: limb(p.lLeg, o.lLeg), rLeg: limb(p.rLeg, o.rLeg),
+    lHand: w > 0.5 && o.lHand && p.lHand === 'relaxed' ? o.lHand : p.lHand, rHand: w > 0.5 && o.rHand && p.rHand === 'relaxed' ? o.rHand : p.rHand};
+}
 
 const LOCOMOTION = new Set<Action>(['walk', 'run', 'escape']);
 const BLEND = 0.35;
@@ -203,6 +237,7 @@ export function evaluateCharacter(ch: SceneCharacter, t: number, sceneDuration: 
   let facing = ch.facing;
   let result: CharacterFrame | null = null;
   let prevPose: Pose | null = null;
+  let prevExpr: Expression = ch.expression;
 
   for (let i = 0; i < cues.length; i++) {
     const cue = cues[i];
@@ -217,7 +252,7 @@ export function evaluateCharacter(ch: SceneCharacter, t: number, sceneDuration: 
     const evalAt = (tt: number): {pose: Pose; p: Vec3; f: number} => {
       const local = Math.max(0, tt - cue.start);
       const x = local / dur;
-      const k = normMove(x);
+      const k = cue.moveCurve ? propMotion(cue.moveCurve, x).k : normMove(x);
       const p: Vec3 = [lerp(from[0], to[0], k), lerp(from[1], to[1], k), lerp(from[2], to[2], k)];
       const moving = LOCOMOTION.has(cue.action) && dist > 0.01;
       const travel = moving ? dist * k : 0;
@@ -235,13 +270,21 @@ export function evaluateCharacter(ch: SceneCharacter, t: number, sceneDuration: 
       const local = t - cue.start;
       if (prevPose && local < BLEND) pose = blendPose(prevPose, pose, smooth(local / BLEND));
       const reachW = cue.reach ? smooth(local / 0.35) : 0;
-      result = {pose, position: cur.p, facing: cur.f, expression: cue.expression ?? ch.expression,
+      const expr = cue.expression ?? prevExpr;
+      const exprK = expr === prevExpr ? 1 : smooth(local / 0.3);
+      // body language: blend out the old feeling, blend in the new one
+      const moving = LOCOMOTION.has(cue.action) ? 0.4 : cue.action === 'lying' || cue.action === 'fall' ? 0 : 1;
+      const bOld = BODY[prevExpr], bNew = BODY[expr];
+      if (bOld && exprK < 1) pose = addBody(pose, bOld(t), (1 - exprK) * moving);
+      if (bNew) pose = addBody(pose, bNew(t), exprK * moving * cue.intensity);
+      result = {pose, position: cur.p, facing: cur.f, expression: expr, exprFrom: prevExpr, exprK,
+        emotion: STRONG.has(expr) ? exprK : 0.3 * exprK,
         talking: cue.action === 'talk' || cue.action === 'argue' || cue.action === 'laugh', prop: cue.prop, action: cue.action,
-        reach: cue.reach ? {...cue.reach, weight: reachW} : undefined, lookAt: cue.target};
+        reach: cue.reach ? {weight: reachW, ...Object.fromEntries(Object.entries(cue.reach).map(([k2, v2]) => [k2, v2 ? [v2[0] + cur.p[0] - from[0], v2[1], v2[2] + cur.p[2] - from[2]] : v2]))} : undefined, lookAt: cue.target, lookAtCharacter: cue.lookAtCharacter};
       break;
     }
     const done = evalAt(end);
-    prevPose = done.pose; pos = to; facing = targetFacing;
+    prevPose = done.pose; pos = to; facing = targetFacing; prevExpr = cue.expression ?? prevExpr;
   }
   return result!;
 }

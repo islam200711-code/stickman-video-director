@@ -98,6 +98,53 @@ Moves: `static push-in pull-out pan-left pan-right track orbit crane-up`. Every 
 
 Use at most one move type per shot. Keep the camera on the action side of the 180° line between conversing characters, and keep `angle` consistent across a dialogue exchange. Hold static for reaction beats. Shake is reserved for physical effort or impact (≤ 0.5).
 
+## 7b. Automatic direction (coverage) — `camera.coverage: "auto"`
+
+The director (`director/coverage.ts`) edits each storyboard shot from its events. Events can be explicit (`beat.event`) or implicit:
+- `talk`/`argue` → **dialogue**
+- a strong-emotion expression → **reaction**
+- walking or running with `to` → **enter**
+- a `heavy` or `drop` prop → **impact**
+
+| Event | Coverage |
+|---|---|
+| Start of a new location | Establishing (14 m, slow push) |
+| Same location continues | Wide |
+| dialogue | Two-shot first; the reply cuts to an **over-the-shoulder** reverse from the listener |
+| reaction | **Close-up** of the reactor |
+| emphasis | **Extreme close-up** |
+| impact | Wide shot plus a decaying shake burst |
+| reveal | Medium shot that pulls out to wide |
+| enter | Wide tracking shot |
+
+Rules enforced:
+- Minimum hold of 1.25 s, unless a higher-priority event replaces a shot that hasn't had time to play.
+- No jump cut to an identical framing.
+- **180° rule:** the over-the-shoulder camera stays on the camera side of the action line.
+- **Eye-line match:** singles are angled toward the partner.
+- **Rule of thirds with lead room:** the subject's eyes sit on the upper third, with the subject on the third away from the partner. This also frees one side of the frame for captions.
+- Framing tracks the **solved head** (it follows leans, hops and crouches).
+- A slow drift inside every shot.
+- **No close-up while a title is on screen;** such shots are widened.
+
+`npm run build` prints the resulting shot list.
+
+## 7c. Text safe zones (titles, labels, captions)
+
+- Text lives inside **title-safe margins** (6% of frame). Candidate slots are top, bottom, centre, lower-left and the narrow sides.
+- `remotion/safezones.ts` projects every character's body and **solved head** plus every moving prop through the scene camera. Each text block takes the slot with the least overlap; heads are a hard constraint.
+- Placement is decided once per block, so text never jumps mid-read. Captions are placed **per phrase**, and a phrase never straddles a camera cut: it splits, trims or delays to the cut, as a subtitle editor would.
+- `npm run qc` fails, and `npx tsx scripts/sve.ts safezones <id>` reports, if any sampled frame has text over a head. Body overlap is reported for review.
+- Use `position` (`top/center/bottom`) only as a preference; the default is `auto`.
+
+## 7d. Looks — lighting, depth and grade presets (`shot.look`)
+
+The presets are `natural`, `high-key`, `golden-hour`, `overcast`, `dramatic`, `moody-night`, `interior-warm`, `interior-cool` and `tension` (`three/looks.ts`).
+
+A look scales the existing key, fill and rim lights and can recolour or re-angle the key. It also scales fog distance (haze and depth) and sets exposure, plus a 2D grade (saturation, contrast, tint and vignette) applied in Remotion. It adds no render cost. The grade never touches text.
+
+Match the look to the story beat: `golden-hour` for warmth or endings, `tension` and `dramatic` for conflict, `interior-warm` for home.
+
 ## 8. Animation principles
 
 - **Deterministic:** every pose is a pure function of time; no randomness or state.
@@ -108,12 +155,32 @@ Use at most one move type per shot. Keep the camera on the action side of the 18
 - **Gestures:** each talking or reaction action sets a hand shape; one clear gesture per beat.
 - **Interaction:** use IK (`reach` in a beat) when hands must touch something: a prop, a boulder, another character. Do not fake contact by moving the character.
 - **Readability over realism:** poses should read in silhouette. Check them with `npm run action-sheet`.
+- **Acting is whole-body:** every expression drives an additive posture layer, for example:
+  - sad: slump, head down
+  - angry: lean in, fists
+  - scared: recoil, guard and tremble
+  - excited: bounce
+
+  Faces cross-fade over 0.3 s (brows, eyes and pupils glide; the mouth swaps halfway).
+- **Gaze:** listeners automatically look at whoever is talking (head turn plus eyes). Use `lookAtCharacter` or `lookAt` for explicit eye-lines.
+- **Object weight** (`prop.move.weight`):
+  - `heavy`: strains in place, gathers momentum and settles with an overshoot
+  - `drop`: falls under gravity with two decaying bounces
+  - `light`: snappy
+
+  Characters pushing or carrying use the same `moveCurve`; their IK hand targets travel with them, so hands stay on the object.
 
 ## 9. Performance budget
 
 - **Defaults:** 720p, 24 fps. 1080p is optional (`--quality 1080p`).
 - **Geometry:** characters are about 6k triangles; sets are built from primitives, with scatter (grass, flowers) instanced in one draw call each. One shadow-casting light and 2048 shadow map; extra point lights don't cast shadows.
-- Expect roughly 0.4–1.5 s per frame on a 4-core cloud container with software WebGL. Use `scripts/stills.ts` to review frames before a full render.
+- **Measured (4-core cloud container, software WebGL, 720p, MSAA on):**
+  - Concurrency: 2 tabs ≈ 0.70 s/frame, **3 ≈ 0.64 (default)**, 4 ≈ 0.85; 6 failed.
+  - Shadow map: 1024 looks identical to 2048 at 720p and is about 8% faster, so 1024 is the default.
+  - PCF-soft shadows cost about 3% over plain PCF; kept.
+  - Turning MSAA off would save about 25% but degrades character edges; MSAA stays on.
+- Knobs are in `format.render` (`shadowMap`, `msaa`, `softShadows`), with `REMOTION_CONCURRENCY` for concurrency.
+- Review frames with `npm run stills` (one bundle, many frames) before a full render.
 
 ## 10. Benchmark (regression check for this guide)
 

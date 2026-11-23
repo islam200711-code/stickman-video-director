@@ -80,3 +80,51 @@ test('two-bone IK places the hand on a reachable target and preserves bone lengt
   assert.ok(Math.abs(sk.rArm.shoulder.distanceTo(sk.rArm.elbow) - PROPORTIONS.upperArm) < 1e-6);
   assert.ok(Math.abs(sk.rArm.elbow.distanceTo(sk.rArm.wrist) - PROPORTIONS.forearm) < 1e-6);
 });
+
+import {propMotion} from '../animations/weight';
+import {cameraAt} from '../three/camera';
+import {planShots} from '../director/coverage';
+import {Storyboard} from '../director/storyboard';
+import {protectedRects, textBox} from '../remotion/safezones';
+
+test('object weight curves: heavy strains before moving and settles; drop lands with bounces', () => {
+  assert.equal(propMotion('heavy', 0.1).k, 0, 'heavy object must not travel during the strain phase');
+  assert.ok(propMotion('heavy', 0.1).wobble !== 0);
+  assert.ok(propMotion('heavy', 1).k > 0.99 && propMotion('heavy', 1).k < 1.03);
+  assert.ok(propMotion('drop', 0.2, 5).lift > propMotion('drop', 0.5, 5).lift, 'falls');
+  assert.ok(propMotion('drop', 0.7, 5).lift > 0, 'bounces after landing');
+  for (const w of ['smooth', 'heavy', 'light', 'drop'] as const) for (let u = 0; u <= 1; u += 0.05) assert.ok(Number.isFinite(propMotion(w, u, 3).k));
+});
+
+test('camera: hard cuts hold then jump; impacts add decaying shake', () => {
+  const cam = {keys: [{t: 0, position: [0, 1, 5] as [number, number, number], lookAt: [0, 1, 0] as [number, number, number], fov: 40, cut: false}, {t: 2, position: [3, 1, 5] as [number, number, number], lookAt: [0, 1, 0] as [number, number, number], fov: 30, cut: true}], shake: 0, impacts: [{t: 1, strength: 1}], ease: 'inOut' as const};
+  assert.deepEqual(cameraAt(cam, 1.9).position.map((x) => Math.round(x)), [0, 1, 5], 'holds until the cut');
+  assert.equal(cameraAt(cam, 2).fov, 30);
+  assert.notDeepEqual(cameraAt(cam, 1.05).position, [0, 1, 5], 'shake burst after impact');
+  assert.deepEqual(cameraAt(cam, 1.95).position, [0, 1, 5], 'burst has decayed');
+});
+
+test('auto coverage: establish, dialogue singles/OTS, reaction close-up, min hold, title widening', () => {
+  const board = Storyboard.parse(JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '../projects/cinematic-benchmark/storyboard.json'), 'utf8')));
+  const {spec} = storyboardToSpec(board, {narration: {}, sfx: {}});
+  const sh = board.shots[0];
+  const {plan} = planShots(sh, spec.scenes[0].characters, spec.scenes[0].duration, 1, 'establishing');
+  assert.equal(plan[0].type, 'establishing');
+  assert.ok(plan.some((p) => p.type === 'over-shoulder'), 'reverse dialogue uses OTS');
+  assert.ok(plan.some((p) => p.type === 'close'), 'strong emotion gets a close-up');
+  for (let i = 1; i < plan.length; i++) assert.ok(plan[i].t - plan[i - 1].t >= 1.25 - 1e-9, 'minimum shot length');
+  const last = board.shots[3];
+  const p4 = planShots(last, spec.scenes[3].characters, spec.scenes[3].duration, 1, 'establishing').plan;
+  assert.ok(!p4.some((p) => (p.type === 'close' || p.type === 'extreme-close') && p.t + 0.1 > 4.6), 'no close-up under the title');
+});
+
+test('safe zones: projected heads are found and text boxes stay inside title-safe margins', () => {
+  const board = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '../projects/cinematic-benchmark/storyboard.json'), 'utf8'));
+  const {spec} = storyboardToSpec(board, {narration: {}, sfx: {}});
+  const rects = protectedRects(VideoSpec.parse(spec).scenes[0], 4, 1280, 720);
+  assert.ok(rects.filter((r) => r.kind === 'head').length >= 2);
+  for (const sl of ['top', 'bottom', 'side-left', 'side-right'] as const) {
+    const b = textBox('A reasonably long caption line for testing', 'caption', sl, 1280, 720);
+    assert.ok(b.x0 >= 1280 * 0.06 - 1 && b.x1 <= 1280 * 0.94 + 1 && b.y0 >= 720 * 0.06 - 1 && b.y1 <= 720 * 0.94 + 1, `${sl} outside title-safe`);
+  }
+});

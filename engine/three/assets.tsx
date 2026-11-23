@@ -250,3 +250,30 @@ export const WallClock: React.FC<{p: V3}> = ({p}) => (
     <mesh position={[0, -0.05, 0.035]} rotation={[0, 0, 0.1]} material={mat('#222')}><planeGeometry args={[0.02, 0.1]} /></mesh>
   </group>
 );
+
+/* ---------- low-poly street / park details (cheap, reusable) ---------- */
+export const Car: React.FC<{p: V3; color?: string; r?: number}> = ({p, color = '#d9534f', r = 0}) => {
+  const body = mat(color, {rough: 0.35}), glass = mat('#bfe3ff', {rough: 0.15, emissive: 0.15}), tyre = mat('#2a2a2e', {rough: 0.9});
+  return <group position={p} rotation={[0, r, 0]}>
+    <M p={[0, 0.55, 0]} m={body}><boxGeometry args={[3.6, 0.6, 1.6]} /></M>
+    <M p={[-0.2, 1.05, 0]} m={body}><boxGeometry args={[1.9, 0.5, 1.45]} /></M>
+    <mesh position={[-0.2, 1.05, 0.73]} material={glass}><planeGeometry args={[1.75, 0.4]} /></mesh>
+    <mesh position={[-0.2, 1.05, -0.73]} rotation={[0, Math.PI, 0]} material={glass}><planeGeometry args={[1.75, 0.4]} /></mesh>
+    {[[-1.15, 0.8], [1.15, 0.8], [-1.15, -0.8], [1.15, -0.8]].map(([x, z], i) => <M key={i} p={[x, 0.32, z]} r={[Math.PI / 2, 0, 0]} m={tyre}><cylinderGeometry args={[0.32, 0.32, 0.25, 16]} /></M>)}
+    <mesh position={[1.81, 0.6, 0.5]} material={mat('#fff6c8', {emissive: 0.6})}><circleGeometry args={[0.1, 10]} /></mesh>
+  </group>;
+};
+export const Hydrant: React.FC<{p: V3}> = ({p}) => (
+  <group position={p}>
+    <M p={[0, 0.3, 0]} m={mat('#d9433b', {rough: 0.5})}><cylinderGeometry args={[0.12, 0.14, 0.6, 12]} /></M>
+    <M p={[0, 0.65, 0]} m={mat('#d9433b', {rough: 0.5})}><sphereGeometry args={[0.13, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} /></M>
+    <M p={[0, 0.4, 0]} r={[0, 0, Math.PI / 2]} m={mat('#b8352e', {rough: 0.5})}><cylinderGeometry args={[0.05, 0.05, 0.36, 8]} /></M>
+  </group>
+);
+export const Pond: React.FC<{p: V3; r?: number}> = ({p, r = 2.6}) => (
+  <group position={p}>
+    <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={[1, 0.6, 1]} material={mat('#c9b98f', {rough: 1})} receiveShadow><circleGeometry args={[r + 0.35, 28]} /></mesh>
+    <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={[1, 0.6, 1]} material={mat('#5fb3d9', {rough: 0.15, emissive: 0.08})}><circleGeometry args={[r, 28]} /></mesh>
+    {[[-0.8, 0.3], [0.6, -0.4], [1.2, 0.5]].map(([x, z], i) => <mesh key={i} position={[x, 0.03, z]} rotation={[-Math.PI / 2, 0, i]} material={mat('#4c9e4f', {rough: 0.8})}><circleGeometry args={[0.22, 10, 0, 5.6]} /></mesh>)}
+  </group>
+);

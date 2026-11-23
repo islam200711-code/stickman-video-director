@@ -15,6 +15,7 @@ import {Storyboard} from '../director/storyboard';
 import {storyboardToSpec} from '../adapters/storyboardToSpec';
 import {buildAudio, ENGINE_ROOT, probeDuration} from '../audio';
 import {VideoSpec, resolution, totalFrames} from '../schema/scene';
+import {planOverlays} from '../remotion/Overlays';
 
 const [, , cmd, id, ...rest] = process.argv;
 const flag = (n: string, d?: string) => {const i = rest.indexOf(`--${n}`); return i >= 0 ? rest[i + 1] : d;};
@@ -48,12 +49,13 @@ function cmdBuild(pid: string) {
   const board = parsed.data;
   const audio = buildAudio({projectId: pid, publicDir: P('public'), language: board.brief.language, voice: board.voice,
     shots: board.shots, music: board.music, baseDir: projectDir(pid)});
-  const {spec, warnings} = storyboardToSpec(board, audio);
+  const {spec, warnings, shotList} = storyboardToSpec(board, audio);
   fs.mkdirSync(path.dirname(specPath(pid)), {recursive: true});
   fs.writeFileSync(specPath(pid), JSON.stringify(spec, null, 2));
   fs.writeFileSync(path.join(projectDir(pid), 'CREDITS.txt'), [`${board.title}`, '', 'Audio credits:', ...audio.credits.map((c) => `- ${c}`), ''].join('\n'));
   const frames = totalFrames(spec);
   console.log(`✔ spec: ${path.relative(process.cwd(), specPath(pid))}  scenes=${spec.scenes.length} frames=${frames} (${(frames / spec.format.fps).toFixed(3)}s @ ${spec.format.fps}fps)`);
+  console.log('  shot list:'); shotList.forEach((l) => console.log(`    ${l}`));
   [...audio.notes, ...warnings].forEach((w) => console.log(`  ⚠ ${w}`));
 }
 
@@ -78,7 +80,7 @@ function cmdRender(pid: string) {
   const spec = loadSpec(pid);
   const out = outName(pid, spec);
   fs.mkdirSync(path.dirname(out), {recursive: true});
-  remotion(['render', 'remotion/index.ts', 'StickmanVideo', out, '--codec=h264', '--crf=20', '--pixel-format=yuv420p', `--concurrency=${process.env.REMOTION_CONCURRENCY ?? 4}`], spec);
+  remotion(['render', 'remotion/index.ts', 'StickmanVideo', out, '--codec=h264', '--crf=20', '--pixel-format=yuv420p', `--concurrency=${process.env.REMOTION_CONCURRENCY ?? 3}`], spec);
   if (!fs.existsSync(out)) die('render reported success but no MP4 exists');
   // Remotion encodes JPEG frames as full-range yuvj420p; normalise to broadcast-range yuv420p for every player/platform.
   const tmp = out.replace(/\.mp4$/, '.tmp.mp4');
@@ -133,12 +135,34 @@ function cmdQc(pid: string) {
   fs.rmSync(sheetDir, {recursive: true, force: true}); fs.mkdirSync(sheetDir, {recursive: true});
   times.forEach((t, i) => execFileSync('ffmpeg', ['-v', 'error', '-ss', t.toFixed(3), '-i', file, '-frames:v', '1', '-vf', 'scale=640:-2', path.join(sheetDir, `scene-${String(i + 1).padStart(2, '0')}-${t.toFixed(1)}s.png`)]));
   execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', file, '-vf', `fps=1,scale=320:-2,tile=6x${Math.ceil((wantFrames / fps) / 6)}`, '-frames:v', '1', P('renders', `${pid}-contact.png`)]);
+  const sz = cmdSafezones(pid, true);
+  add('text safe zones (no head covered)', sz.headFail === 0, `${sz.rows.length} text blocks checked`);
+  report.safezones = sz.rows;
   report.checks = checks;
   report.sceneFrames = fs.readdirSync(sheetDir).map((f) => path.join('renders', `${pid}-frames`, f));
   fs.writeFileSync(file.replace(/\.mp4$/, '.qc.json'), JSON.stringify(report, null, 2));
   console.table(checks);
   console.log(`contact sheet: renders/${pid}-contact.png  scene frames: renders/${pid}-frames/`);
   if (checks.some((c) => !c.ok)) process.exit(2);
+}
+
+/** Safe-zone audit: every title/label/caption vs projected characters + moving action, sampled every 3 frames. */
+function cmdSafezones(pid: string, quiet = false) {
+  const spec = loadSpec(pid);
+  const {width, height} = resolution(spec.format);
+  const rows: {scene: string; text: string; slot: string; headHits: string; bodyHits: string}[] = [];
+  let headFail = 0;
+  for (const sc of spec.scenes) {
+    const plan = planOverlays(sc, width, height, spec.format.fps);
+    const items = [...sc.text.map((x, i) => ({text: x.text, p: plan.texts[i]})), ...(spec.captions && plan.caption ? plan.caption.chunks.map((c, i) => ({text: '[cap] ' + c.text, p: plan.caption!.placements[i]})) : [])];
+    for (const it of items) {
+      headFail += it.p.headHits;
+      rows.push({scene: sc.id, text: it.text.slice(0, 38), slot: it.p.slot, headHits: `${it.p.headHits}/${it.p.samples}`, bodyHits: `${it.p.bodyHits}/${it.p.samples}`});
+    }
+  }
+  if (!quiet) console.table(rows);
+  console.log(headFail === 0 ? '✔ no text block covers a character head' : `✖ ${headFail} sampled frames where text covers a head`);
+  return {rows, headFail};
 }
 
 if (!cmd || !id) die('usage: sve <new|build|render|qc|produce|still> <project-id> [...]');
@@ -148,6 +172,7 @@ switch (cmd) {
   case 'render': cmdRender(id); break;
   case 'still': cmdStill(id, rest[0] ?? '1'); break;
   case 'qc': cmdQc(id); break;
+  case 'safezones': if (cmdSafezones(id).headFail) process.exit(2); break;
   case 'produce': cmdBuild(id); cmdRender(id); cmdQc(id); break;
   default: die(`unknown command ${cmd}`);
 }

@@ -28,16 +28,19 @@ A storyboard is `projects/<id>/storyboard.json`, validated by `director/storyboa
 | `camera.move` | `static push-in pull-out pan-left pan-right track orbit crane-up` |
 | `camera.focus` | Character id, list of ids, or `[x,y,z]`. `track` follows the focus as it moves |
 | `camera.angle` / `shake` | Yaw around the focus in degrees (0 = front); shake amount |
+| `camera.coverage` | `single` (default: the shot/move above) or `auto` (the director cuts wide, medium, close, extreme-close and over-the-shoulder from beat events; see STYLE_GUIDE §7b) |
+| `look` | Lighting, depth and grade preset: `natural high-key golden-hour overcast dramatic moody-night interior-warm interior-cool tension` |
+| `ambient` | `auto none leaves dust fireflies petals`: deterministic ambient particles |
 | `blocking` | `{charId: {at:[x,0,z], facing, expression, label?}}`. Facing is in degrees: 0 = camera, 90 = screen right |
-| `beats` | `{who, do: <action>, at, until?, to?, facing?, expression?, speed?, intensity?, prop?}` |
-| `props` | `{kind, at, scale?, rotation?, color?, appearAt?, move?: {to, start, end, roll}}` |
-| `text` | `{text, at, until?, style: title\|label\|caption\|lower-third, position: top\|center\|bottom}` |
+| `beats` | `{who, do: <action>, at, until?, to?, facing?, expression?, speed?, intensity?, prop?, reach?: {left?, right?}, lookAt?, lookAtCharacter?, moveCurve?: smooth\|heavy\|light, event?: dialogue\|reaction\|emphasis\|impact\|reveal\|enter}` |
+| `props` | `{kind, at, scale?, rotation?, color?, appearAt?, disappearAt?, move?: {to, start, end, roll, weight: smooth\|heavy\|light\|drop}}` |
+| `text` | `{text, at, until?, style: title\|label\|caption\|lower-third, position: auto (default, safe-zone placement)\|top\|center\|bottom}` |
 | `sfx` | `{sound: "<library id or search words or local path>", at, volume}` |
 | `transition` | Transition into this shot: `cut fade slide wipe`, plus `transitionDuration` |
 
-**Actions:** idle walk run jump fall sit stand talk point think surprised celebrate argue fight escape work computer hold wave shrug facepalm thumbsup lying push.
+**Actions:** idle walk run jump fall sit stand talk point think surprised celebrate argue fight escape work computer hold wave shrug facepalm thumbsup lying push reach clap nod headshake crouch laugh.
 
-**Expressions:** neutral happy sad angry surprised thinking worried determined.
+**Expressions:** neutral happy excited sad angry surprised scared thinking worried determined confused smug.
 
 **World units:** metres. A stickman is about 1.9 units tall. x is screen-right, z is toward the camera, y is up.
 

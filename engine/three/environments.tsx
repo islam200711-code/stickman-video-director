@@ -10,8 +10,9 @@
  */
 import React from 'react';
 import * as THREE from 'three';
-import {Bench, Bookshelf, Building, Bush, Cloud, CoffeeTable, Fence, FloorLamp, Hills, mat, Mountains, PictureFrame, Planter, PottedPlant, Rug, Scatter, SkyDome, Sofa, StreetLamp, TrashBin, Tree, WallClock, Window} from './assets';
+import {Car, Hydrant, Pond, Bench, Bookshelf, Building, Bush, Cloud, CoffeeTable, Fence, FloorLamp, Hills, mat, Mountains, PictureFrame, Planter, PottedPlant, Rug, Scatter, SkyDome, Sofa, StreetLamp, TrashBin, Tree, WallClock, Window} from './assets';
 import {SceneProp} from './props';
+import {getLook} from './looks';
 
 type Pal = Record<string, string>;
 type TOD = 'day' | 'dusk' | 'night';
@@ -55,6 +56,7 @@ export const ENVIRONMENTS: Record<string, EnvDef> = {
         <Tree key={i} p={[x as number, 0, z as number]} s={s as number} kind={k as 'round'} seed={i + 1} color={i % 2 ? p.tree : p.tree2} />)}
       {[[-6.5, -3.2], [3.6, -3.6], [9, -3], [-11, -3.4]].map(([x, z], i) => <Bush key={i} p={[x, 0, z]} s={0.9 + (i % 2) * 0.3} />)}
       <Bench p={[-3.2, 0, -2.6]} />
+      <Pond p={[11, 0, -9]} />
       <Fence p={[6, 0, -4.4]} length={6} />
       <Scatter kind="grass" count={900} x={[-22, 22]} z={[-14, 6]} seed={3} color={p.grass} avoid={nearPath} />
       <Scatter kind="flower" count={120} x={[-20, 20]} z={[-12, -2.6]} seed={8} color={p.flower} />
@@ -93,6 +95,9 @@ export const ENVIRONMENTS: Record<string, EnvDef> = {
       <Planter p={[-4.6, 0.14, -2.9]} />
       <Planter p={[9.5, 0.14, -2.9]} />
       <TrashBin p={[2.6, 0.14, -2.9]} />
+      <Car p={[-14, 0, 0.6]} color="#4a90d9" />
+      <Car p={[13, 0, 0.6]} color="#e8c547" r={Math.PI} />
+      <Hydrant p={[6.8, 0.14, -1.5]} />
       <Bench p={[-11.5, 0.14, -2.8]} />
       {/* lane markings */}
       {Array.from({length: 16}, (_, i) => <mesh key={i} position={[-30 + i * 4, 0.006, 2.2]} rotation={[-Math.PI / 2, 0, 0]} material={mat('#f4f4f4', {rough: 1})}><planeGeometry args={[1.8, 0.14]} /></mesh>)}
@@ -176,25 +181,31 @@ const LIGHT = {
   night: {key: '#9fb2ff', keyI: 0.8, fill: 0.45, sky: '#3a4a8a', ground: '#202030', rim: '#7fa0ff', rimI: 0.9},
 };
 
-export const EnvironmentView: React.FC<{preset: string; palette?: Pal; timeOfDay: TOD}> = ({preset, palette, timeOfDay}) => {
+const EnvironmentViewImpl: React.FC<{preset: string; palette?: Pal; timeOfDay: TOD; shadowMap?: number; look?: string}> = ({preset, palette, timeOfDay, shadowMap = 1024, look}) => {
   const def = ENVIRONMENTS[preset];
   if (!def) throw new Error(`Unknown environment "${preset}". Known: ${Object.keys(ENVIRONMENTS).join(', ')}`);
   const pal = {...def.palette, ...(palette ?? {})};
   const sky = def.sky(pal, timeOfDay);
   const L = LIGHT[timeOfDay];
-  const keyPos: [number, number, number] = timeOfDay === 'dusk' ? [-9, 5, 4] : [6, 10, 7];
+  const lk = getLook(look);
+  const keyPos: [number, number, number] = lk.keyAngle === 'low-side' ? [-9, 4, 3] : lk.keyAngle === 'back' ? [3, 7, -9] : timeOfDay === 'dusk' ? [-9, 5, 4] : [6, 10, 7];
+  const fogNear = (def.fog?.[0] ?? (def.indoor ? 30 : 28)) * lk.fog, fogFar = (def.fog?.[1] ?? (def.indoor ? 80 : 140)) * lk.fog;
   return (
     <>
       <color attach="background" args={[sky.horizon]} />
-      <fog attach="fog" args={[sky.horizon, def.fog?.[0] ?? (def.indoor ? 30 : 28), def.fog?.[1] ?? (def.indoor ? 80 : 140)]} />
+      <fog attach="fog" args={[sky.horizon, fogNear, fogFar]} />
       {!def.indoor && <SkyDome top={sky.top} horizon={sky.horizon} />}
-      <hemisphereLight args={[L.sky, L.ground, def.indoor ? L.fill * 1.8 : L.fill]} />
-      <directionalLight position={keyPos} intensity={def.indoor ? L.keyI * 0.8 : L.keyI} color={L.key} castShadow
-        shadow-mapSize={[2048, 2048]} shadow-camera-left={-14} shadow-camera-right={14} shadow-camera-top={12} shadow-camera-bottom={-8} shadow-camera-far={60} shadow-bias={-0.0004} shadow-normalBias={0.02} />
+      <hemisphereLight args={[L.sky, L.ground, (def.indoor ? L.fill * 1.8 : L.fill) * lk.fill]} />
+      <directionalLight position={keyPos} intensity={(def.indoor ? L.keyI * 0.8 : L.keyI) * lk.key} color={lk.keyColor ?? L.key} castShadow
+        shadow-mapSize={[shadowMap, shadowMap]} shadow-camera-left={-14} shadow-camera-right={14} shadow-camera-top={12} shadow-camera-bottom={-8} shadow-camera-far={60} shadow-bias={-0.0004} shadow-normalBias={0.02} />
       {/* rim light from behind separates characters from the background */}
-      <directionalLight position={[-4, 6, -9]} intensity={L.rimI} color={L.rim} />
+      <directionalLight position={[-4, 6, -9]} intensity={L.rimI * lk.rim} color={lk.rimColor ?? L.rim} />
       <ambientLight intensity={0.15} />
       {def.build(pal, timeOfDay)}
     </>
   );
 };
+
+/** Static set: memoised so it is not reconciled again on every frame (only the camera and actors change). */
+export const EnvironmentView = React.memo(EnvironmentViewImpl, (a, b) => a.preset === b.preset && a.timeOfDay === b.timeOfDay && a.shadowMap === b.shadowMap && a.look === b.look && JSON.stringify(a.palette) === JSON.stringify(b.palette));
+export const isIndoor = (preset: string) => !!ENVIRONMENTS[preset]?.indoor;

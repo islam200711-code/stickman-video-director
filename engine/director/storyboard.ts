@@ -31,16 +31,22 @@ export const Beat = z.object({
   prop: z.string().optional(),
   reach: z.object({left: Vec3.optional(), right: Vec3.optional()}).optional(), // IK hand targets, world space
   lookAt: Vec3.optional(),
+  lookAtCharacter: z.string().optional(),
+  moveCurve: z.enum(['smooth', 'heavy', 'light']).optional(),
+  /** storyboard event that drives auto camera coverage (implicit events are also detected) */
+  event: z.enum(['dialogue', 'reaction', 'emphasis', 'impact', 'reveal', 'enter']).optional(),
 });
 
 export const ShotCamera = z.object({
   shot: z.enum(['establishing', 'wide', 'medium', 'close', 'extreme-close', 'low', 'high', 'two-shot', 'over-shoulder']).default('medium'),
   move: z.enum(['static', 'push-in', 'pull-out', 'pan-left', 'pan-right', 'track', 'orbit', 'crane-up']).default('static'),
   focus: z.union([z.string(), Vec3, z.array(z.string())]).optional(), // character id(s) or a point
-  angle: z.number().default(0),
+  angle: z.number().default(0),          // yaw around focus in degrees (0 = from front)
   from: z.string().optional(),          // over-shoulder: whose shoulder (focus = who we look at)
-  fov: z.number().optional(),           // override the lens         // yaw around focus in degrees (0 = from front)
+  fov: z.number().optional(),           // override the lens
   shake: z.number().default(0),
+  /** single = one framed shot (shot/move above); auto = director cuts wide/medium/close/ECU/OTS from beat events */
+  coverage: z.enum(['single', 'auto']).default('single'),
 });
 
 export const Shot = z.object({
@@ -49,13 +55,15 @@ export const Shot = z.object({
   environment: z.string(),
   timeOfDay: z.enum(['day', 'dusk', 'night']).default('day'),
   palette: z.record(z.string()).optional(),
+  look: z.string().default('natural'),    // lighting/depth/grade preset, see three/looks.ts
+  ambient: z.enum(['auto', 'none', 'leaves', 'dust', 'fireflies', 'petals']).default('auto'),
   narration: z.string().optional(),
   duration: z.number().positive().optional(),
   camera: ShotCamera.default({}),
   blocking: z.record(z.object({at: Vec3, facing: z.number().default(0), expression: Expression.default('neutral'), label: z.string().optional()})).default({}),
   beats: z.array(Beat).default([]),
-  props: z.array(z.object({kind: z.string(), at: Vec3, rotation: z.number().default(0), scale: z.number().default(1), color: z.string().optional(), appearAt: z.number().optional(), move: z.object({to: Vec3, start: z.number(), end: z.number(), roll: z.boolean().default(false)}).optional()})).default([]),
-  text: z.array(z.object({text: z.string(), at: z.number(), until: z.number().optional(), style: z.enum(['title', 'caption', 'label', 'lower-third']).default('label'), position: z.enum(['top', 'center', 'bottom']).default('top')})).default([]),
+  props: z.array(z.object({kind: z.string(), at: Vec3, rotation: z.number().default(0), scale: z.number().default(1), color: z.string().optional(), appearAt: z.number().optional(), disappearAt: z.number().optional(), move: z.object({to: Vec3, start: z.number(), end: z.number(), roll: z.boolean().default(false), weight: z.enum(['smooth', 'heavy', 'light', 'drop']).default('smooth')}).optional()})).default([]),
+  text: z.array(z.object({text: z.string(), at: z.number(), until: z.number().optional(), style: z.enum(['title', 'caption', 'label', 'lower-third']).default('label'), position: z.enum(['auto', 'top', 'center', 'bottom']).default('auto')})).default([]),
   sfx: z.array(z.object({sound: z.string(), at: z.number(), volume: z.number().default(0.8)})).default([]),
   transition: z.enum(['cut', 'fade', 'slide', 'wipe']).default('cut'),
   transitionDuration: z.number().default(0.5),

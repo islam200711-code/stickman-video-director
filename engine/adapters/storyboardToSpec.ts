@@ -10,7 +10,9 @@
  *  - generate camera keyframes from film-language shot/move descriptions
  */
 import {Storyboard, type Shot, type StoryboardInput} from '../director/storyboard';
-import {VideoSpec, type ActionCue, type Scene, type SceneCharacter, type Vec3, totalFrames} from '../schema/scene';
+import {z} from 'zod';
+import {VideoSpec, Scene as SceneSchema, type ActionCue, type Scene, type SceneCharacter, type Vec3, totalFrames} from '../schema/scene';
+import {buildAutoCamera, detectEvents} from '../director/coverage';
 import {evaluateCharacter} from '../animations/library';
 
 export type Assets = {
@@ -18,7 +20,7 @@ export type Assets = {
   sfx: Record<string, string>;          // storyboard sound query -> public path
   music?: string;
 };
-export type AdaptResult = {spec: VideoSpec; warnings: string[]};
+export type AdaptResult = {spec: VideoSpec; warnings: string[]; shotList: string[]};
 
 // Style C lens rules: wider lens for space, longer lens (compression) for faces.
 const SHOT_DIST = {establishing: 14, wide: 8.5, 'two-shot': 5.4, medium: 4.2, close: 2.6, 'extreme-close': 1.5, low: 5.8, high: 7, 'over-shoulder': 2.2} as const;
@@ -42,7 +44,7 @@ function buildCharacters(shot: Shot, scale: number, warnings: string[]): SceneCh
     const beats = shot.beats.filter((b) => b.who === id).sort((a, b) => a.at - b.at);
     const track: ActionCue[] = beats.map((b) => ({
       action: b.do, start: round(b.at * scale), end: b.until !== undefined ? round(b.until * scale) : undefined,
-      speed: b.speed ?? 1, intensity: b.intensity ?? 1, expression: b.expression, facing: b.facing, to: b.to, prop: b.prop, reach: b.reach, target: b.lookAt,
+      speed: b.speed ?? 1, intensity: b.intensity ?? 1, expression: b.expression, facing: b.facing, to: b.to, prop: b.prop, reach: b.reach, target: b.lookAt, lookAtCharacter: b.lookAtCharacter, moveCurve: b.moveCurve,
     }));
     if (!track.length || track[0].start > 0) track.unshift({action: 'idle', start: 0, speed: 1, intensity: 1});
     return {id, label: block.label, position: block.at, facing: block.facing, expression: block.expression, track};
@@ -58,7 +60,7 @@ function focusPoint(shot: Shot, chars: SceneCharacter[], t: number, dur: number)
   return [pts.reduce((a, p) => a + p[0], 0) / pts.length, 0, pts.reduce((a, p) => a + p[2], 0) / pts.length];
 }
 
-function buildCamera(shot: Shot, chars: SceneCharacter[], dur: number): Scene['camera'] {
+function buildCamera(shot: Shot, chars: SceneCharacter[], dur: number): z.input<typeof SceneSchema>['camera'] {
   const {shot: type, move, angle, shake} = shot.camera;
   let yaw0 = (angle * Math.PI) / 180;
   const fov = shot.camera.fov ?? FOV[type];
@@ -122,18 +124,31 @@ export function storyboardToSpec(input: StoryboardInput, assets: Assets): AdaptR
     frames[frames.length - 1] += want - have;
   }
 
-  const scenes: Scene[] = board.shots.map((shot, i) => {
+  const shotList: string[] = [];
+  const scenes: z.input<typeof SceneSchema>[] = board.shots.map((shot, i) => {
     const dur = frames[i] / fps;
     const narr = assets.narration[shot.id];
     const usable = dur - 0.15 - (overlaps[i + 1] ?? 0);
     if (narr && shot.narration && 0.25 + narr.duration > usable) warnings.push(`shot ${shot.id}: narration (${narr.duration.toFixed(2)}s from 0.25s) runs past the usable shot length (${usable.toFixed(2)}s before next transition)`);
     const characters = buildCharacters(shot, scale, warnings);
+    let camera: z.input<typeof SceneSchema>['camera'];
+    if (shot.camera.coverage === 'auto' && characters.length) {
+      const opening = i === 0 || board.shots[i - 1].environment !== shot.environment ? 'establishing' : 'wide';
+      const auto = buildAutoCamera(shot, characters, dur, scale, opening);
+      camera = auto.camera;
+      shotList.push(`${shot.id}:`, ...auto.shotList.map((l) => `   ${l}`));
+    } else {
+      camera = buildCamera(shot, characters, dur);
+      camera.impacts = detectEvents(shot, scale).filter((e) => e.kind === 'impact').map((e) => ({t: round(e.t), strength: 1}));
+      shotList.push(`${shot.id}: ${shot.camera.shot} ${shot.camera.move}`);
+    }
     return {
+      look: shot.look,
       id: shot.id, duration: dur,
-      environment: {preset: shot.environment, palette: shot.palette, timeOfDay: shot.timeOfDay},
+      environment: {preset: shot.environment, palette: shot.palette, timeOfDay: shot.timeOfDay, ambient: shot.ambient},
       characters,
-      props: shot.props.map((p) => ({kind: p.kind, position: p.at, rotation: p.rotation, scale: p.scale, color: p.color, appearAt: p.appearAt !== undefined ? p.appearAt * scale : undefined, move: p.move ? {...p.move, start: p.move.start * scale, end: p.move.end * scale} : undefined})),
-      camera: buildCamera(shot, characters, dur),
+      props: shot.props.map((p) => ({kind: p.kind, position: p.at, rotation: p.rotation, scale: p.scale, color: p.color, appearAt: p.appearAt !== undefined ? p.appearAt * scale : undefined, disappearAt: p.disappearAt !== undefined ? p.disappearAt * scale : undefined, move: p.move ? {...p.move, start: p.move.start * scale, end: p.move.end * scale} : undefined})),
+      camera,
       text: shot.text.map((x) => ({text: x.text, start: round(x.at * scale), end: round(Math.min(dur, (x.until ?? x.at + 2.5) * scale)), style: x.style, position: x.position})),
       narration: shot.narration ? {text: shot.narration, start: 0.25, audio: narr?.audio, duration: narr?.duration} : undefined,
       sfx: shot.sfx.flatMap((s) => {const f = assets.sfx[s.sound]; if (!f) {warnings.push(`shot ${shot.id}: sound "${s.sound}" not resolved, skipped`); return [];} return [{file: f, at: round(s.at * scale), volume: s.volume}];}),
@@ -152,5 +167,5 @@ export function storyboardToSpec(input: StoryboardInput, assets: Assets): AdaptR
     scenes,
   });
   if (board.brief.targetDuration && totalFrames(spec) !== Math.round(board.brief.targetDuration * fps)) warnings.push('total frame count does not match target');
-  return {spec, warnings};
+  return {spec, warnings, shotList};
 }

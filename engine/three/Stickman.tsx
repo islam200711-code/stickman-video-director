@@ -134,8 +134,15 @@ function mouthGeo(kind: string) {
   return MOUTH_GEOS[kind];
 }
 
-const Face: React.FC<{expression: Expression; talkOpen: number; blink: number; r: number; inkCol: string}> = ({expression, talkOpen, blink, r, inkCol}) => {
-  const f = FACE[expression];
+/** Cross-fade facial parameters between expressions (brows/eyes/pupils glide, mouth swaps mid-way). */
+function blendFace(a: FaceDef, b: FaceDef, k: number): FaceDef {
+  const l = (x: number, y: number) => x + (y - x) * k;
+  return {mouth: k < 0.5 ? a.mouth : b.mouth, brow: l(a.brow, b.brow), browY: l(a.browY, b.browY), eyeH: l(a.eyeH, b.eyeH),
+    pupil: [l(a.pupil[0], b.pupil[0]), l(a.pupil[1], b.pupil[1])], blush: k < 0.5 ? a.blush : b.blush, lid: l(a.lid ?? 0, b.lid ?? 0)};
+}
+const Face: React.FC<{expression: Expression; from?: Expression; k?: number; look?: [number, number]; talkOpen: number; blink: number; r: number; inkCol: string}> = ({expression, from, k = 1, look = [0, 0], talkOpen, blink, r, inkCol}) => {
+  const f0 = blendFace(FACE[from ?? expression], FACE[expression], k);
+  const f = {...f0, pupil: [f0.pupil[0] + look[0], f0.pupil[1] + look[1]] as [number, number]};
   const zf = r * 0.92;
   const lid = Math.max(blink, f.lid ?? 0);
   const eyeY = Math.max(0.06, f.eyeH * (1 - lid));
@@ -193,7 +200,19 @@ const Accessory: React.FC<{profile: CharacterProfile; r: number}> = ({profile, r
   }
 };
 
-export const Stickman: React.FC<{profile: CharacterProfile; frame: CharacterFrame; time: number; lineWidth?: number}> = ({profile, frame, time, lineWidth = 1}) => {
+export const Stickman: React.FC<{profile: CharacterProfile; frame: CharacterFrame; time: number; lineWidth?: number; gaze?: Vec3}> = ({profile, frame: frame0, time, lineWidth = 1, gaze}) => {
+  // gaze: turn the head toward the target (clamped), the eyes cover the remainder
+  let frame = frame0; let eyeLook: [number, number] = [0, 0];
+  if (gaze && frame0.pose.tilt === 0) {
+    const yawF = (frame0.facing * Math.PI) / 180;
+    const d = new V3(gaze[0] - frame0.position[0], 0, gaze[2] - frame0.position[2]).applyAxisAngle(new V3(0, 1, 0), -yawF);
+    const want = Math.atan2(d.x, d.z);
+    const turn = THREE.MathUtils.clamp(want - frame0.pose.twist, -0.85, 0.85) * 0.75;
+    const dist = Math.hypot(d.x, d.z) || 1;
+    const pitch = THREE.MathUtils.clamp(-Math.atan2(gaze[1] - 1.75 * profile.scale, dist), -0.3, 0.3) * 0.5;
+    frame = {...frame0, pose: {...frame0.pose, headYaw: frame0.pose.headYaw * 0.4 + turn, headPitch: frame0.pose.headPitch + pitch}};
+    eyeLook = [THREE.MathUtils.clamp((want - turn) * 0.02, -0.014, 0.014), 0];
+  }
   const {pose} = frame;
   const yaw = (frame.facing * Math.PI) / 180;
   // world -> character-local for IK targets
@@ -252,7 +271,7 @@ export const Stickman: React.FC<{profile: CharacterProfile; frame: CharacterFram
       <group position={sk.headCenter} quaternion={sk.headQuat}>
         <mesh scale={[1, 1.04, 0.97]} material={skinMat(headCol)} castShadow><sphereGeometry args={[hr, 36, 26]} /></mesh>
         <mesh scale={[1.045, 1.085, 1.015]} material={(() => {const k = `o${profile.color}`; if (!matCache.has(k)) matCache.set(k, new THREE.MeshBasicMaterial({color: darker(profile.color, 0.6), side: THREE.BackSide})); return matCache.get(k)!;})()}><sphereGeometry args={[hr, 36, 26]} /></mesh>
-        <Face expression={frame.expression} talkOpen={talkOpen} blink={blink} r={hr} inkCol={darker(profile.color, 0.45)} />
+        <Face expression={frame.expression} from={frame.exprFrom} k={frame.exprK} look={eyeLook} talkOpen={talkOpen} blink={blink} r={hr} inkCol={darker(profile.color, 0.45)} />
         <Accessory profile={profile} r={hr} />
       </group>
     </group>
