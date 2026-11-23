@@ -80,6 +80,10 @@ function cmdRender(pid: string) {
   fs.mkdirSync(path.dirname(out), {recursive: true});
   remotion(['render', 'remotion/index.ts', 'StickmanVideo', out, '--codec=h264', '--crf=20', '--pixel-format=yuv420p', `--concurrency=${process.env.REMOTION_CONCURRENCY ?? 4}`], spec);
   if (!fs.existsSync(out)) die('render reported success but no MP4 exists');
+  // Remotion encodes JPEG frames as full-range yuvj420p; normalise to broadcast-range yuv420p for every player/platform.
+  const tmp = out.replace(/\.mp4$/, '.tmp.mp4');
+  execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', out, '-vf', 'scale=in_range=full:out_range=tv,format=yuv420p', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-c:a', 'copy', '-movflags', '+faststart', tmp]);
+  fs.renameSync(tmp, out);
   console.log(`✔ rendered ${path.relative(process.cwd(), out)}`);
 }
 
