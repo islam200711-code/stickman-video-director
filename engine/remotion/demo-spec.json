@@ -1,0 +1,4 @@
+{"id":"demo","title":"Rig demo","cast":[],"scenes":[{"id":"s1","duration":4,"environment":{"preset":"studio"},
+"characters":[{"id":"sam","position":[-1,0,0],"track":[{"action":"wave","start":0}]},{"id":"riley","position":[1,0,0],"track":[{"action":"talk","start":0,"expression":"happy"}]}],
+"camera":{"keys":[{"t":0,"position":[0,1.4,6],"lookAt":[0,1,0]},{"t":4,"position":[0.5,1.3,5],"lookAt":[0,1,0]}]},
+"text":[{"text":"Stickman Engine","start":0.3,"end":3.7,"style":"title","position":"top"}]}]}

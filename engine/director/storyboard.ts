@@ -1,0 +1,73 @@
+/**
+ * Storyboard = the director-facing format. This is what Claude (using the
+ * directing-stickman-videos Skill's narrative/storyboard guidance) or a human
+ * writes. It speaks in film language (shot type, camera move, beats) rather than
+ * renderer details. adapters/storyboardToSpec.ts turns it into a VideoSpec.
+ */
+import {z} from 'zod';
+import {Action, CharacterProfile, Expression, Vec3} from '../schema/scene';
+
+export const Brief = z.object({
+  category: z.string().default('unspecified'),   // free text; NOT an engine switch
+  topic: z.string(),
+  language: z.string().default('en'),
+  tone: z.string().default('neutral'),
+  targetDuration: z.number().positive().optional(), // seconds; if set, shots are retimed to hit it
+  aspect: z.enum(['16:9', '9:16']).default('16:9'),
+  quality: z.enum(['720p', '1080p']).default('720p'),
+  fps: z.number().int().default(24),
+});
+
+export const Beat = z.object({
+  who: z.string(),
+  do: Action,
+  at: z.number().min(0),
+  until: z.number().optional(),
+  to: Vec3.optional(),
+  facing: z.number().optional(),
+  expression: Expression.optional(),
+  speed: z.number().positive().optional(),
+  intensity: z.number().optional(),
+  prop: z.string().optional(),
+});
+
+export const ShotCamera = z.object({
+  shot: z.enum(['establishing', 'wide', 'medium', 'close', 'low', 'high', 'two-shot']).default('medium'),
+  move: z.enum(['static', 'push-in', 'pull-out', 'pan-left', 'pan-right', 'track', 'orbit', 'crane-up']).default('static'),
+  focus: z.union([z.string(), Vec3, z.array(z.string())]).optional(), // character id(s) or a point
+  angle: z.number().default(0),         // yaw around focus in degrees (0 = from front)
+  shake: z.number().default(0),
+});
+
+export const Shot = z.object({
+  id: z.string(),
+  purpose: z.string().optional(),       // storyboard note: hook / setup / turn / payoff...
+  environment: z.string(),
+  timeOfDay: z.enum(['day', 'dusk', 'night']).default('day'),
+  palette: z.record(z.string()).optional(),
+  narration: z.string().optional(),
+  duration: z.number().positive().optional(),
+  camera: ShotCamera.default({}),
+  blocking: z.record(z.object({at: Vec3, facing: z.number().default(0), expression: Expression.default('neutral'), label: z.string().optional()})).default({}),
+  beats: z.array(Beat).default([]),
+  props: z.array(z.object({kind: z.string(), at: Vec3, rotation: z.number().default(0), scale: z.number().default(1), color: z.string().optional(), appearAt: z.number().optional(), move: z.object({to: Vec3, start: z.number(), end: z.number(), roll: z.boolean().default(false)}).optional()})).default([]),
+  text: z.array(z.object({text: z.string(), at: z.number(), until: z.number().optional(), style: z.enum(['title', 'caption', 'label', 'lower-third']).default('label'), position: z.enum(['top', 'center', 'bottom']).default('top')})).default([]),
+  sfx: z.array(z.object({sound: z.string(), at: z.number(), volume: z.number().default(0.8)})).default([]),
+  transition: z.enum(['cut', 'fade', 'slide', 'wipe']).default('cut'),
+  transitionDuration: z.number().default(0.5),
+});
+export type Shot = z.infer<typeof Shot>;
+
+export const Storyboard = z.object({
+  id: z.string().regex(/^[a-z0-9-]+$/),
+  title: z.string(),
+  brief: Brief,
+  cast: z.array(z.union([z.string(), CharacterProfile])).default([]),
+  voice: z.object({provider: z.enum(['espeak', 'none', 'files']).default('espeak'), voice: z.string().optional(), rate: z.number().default(155), files: z.record(z.string()).optional()}).default({}),
+  music: z.object({query: z.string().optional(), file: z.string().optional(), volume: z.number().default(0.12)}).optional(),
+  captions: z.boolean().default(true),
+  style: z.object({lineWidth: z.number().default(1), font: z.string().optional()}).default({}),
+  shots: z.array(Shot).min(1),
+});
+export type Storyboard = z.infer<typeof Storyboard>;
+export type StoryboardInput = z.input<typeof Storyboard>;

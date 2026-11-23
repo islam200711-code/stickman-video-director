@@ -1,0 +1,10 @@
+{
+  "_doc": "Reusable stickman cast. Proportions are fixed by animations/library.ts PROPORTIONS; only colour, accessory, build and scale vary. Add characters here or per-video in VideoSpec.cast.",
+  "characters": [
+    {"id": "sam",   "name": "Sam",   "color": "#1f2a44", "headColor": "#fdfdfb", "accent": "#2f7de1", "accessory": "scarf",  "build": "standard"},
+    {"id": "riley", "name": "Riley", "color": "#3b1f1f", "headColor": "#fdfdfb", "accent": "#f08a24", "accessory": "cap",    "build": "slim"},
+    {"id": "max",   "name": "Max",   "color": "#1d2b1d", "headColor": "#fdfdfb", "accent": "#3fa34d", "accessory": "tie",    "build": "sturdy", "scale": 1.08},
+    {"id": "jo",    "name": "Jo",    "color": "#2b1d33", "headColor": "#fdfdfb", "accent": "#c04bd6", "accessory": "bow",    "build": "slim",   "scale": 0.95},
+    {"id": "dev",   "name": "Dev",   "color": "#222222", "headColor": "#fdfdfb", "accent": "#e2c044", "accessory": "glasses","build": "standard"}
+  ]
+}

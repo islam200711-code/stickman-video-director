@@ -1,0 +1,18 @@
+An Ordinary Stickman Faces an Unexpected Challenge
+
+Audio credits:
+- Narration: synthesized with eSpeak NG (GPL-3.0 software; generated audio is not encumbered).
+- Footstep Concrete 000 (kenney-impact-footstep-concrete-000) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Swish 1 (artisticdude-swishes-swish-1) — Swishes Sound Pack — artisticdude (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- boing (aeva-boing-boing) — BOING! - Aeva (https://opengameart.org/content/boing), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged. — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Impact Bell Heavy 000 (kenney-impact-impact-bell-heavy-000) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Jingles Pizzi00 (kenney-jingles-jingles-pizzi00) — Music Jingles — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- sfx100v2 stones 01 (rubberduck-general-100-2-sfx100v2-stones-01) — 100 CC0 SFX #2 - rubberduck (https://opengameart.org/content/100-cc0-sfx-2), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged. — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Impact Wood Heavy 000 (kenney-impact-impact-wood-heavy-000) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- applause clapping church crowd immersive (expl0it3r-applause-applause-clapping-church-crowd-immersive) — Applause in a large hall or church - eXpl0it3r (https://opengameart.org/content/applause-in-a-large-hall-or-church), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged. — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Jingles Hit00 (kenney-jingles-jingles-hit00) — Music Jingles — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Carefree (bgm-carefree) — "Carefree" Kevin MacLeod (incompetech.com)
+Licensed under Creative Commons: By Attribution 4.0 License
+http://creativecommons.org/licenses/by/4.0/
+Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400037
+Library copy: original MP3 unchanged. In a finished video, disclose actual edits/synchronization. — CC-BY-4.0 https://creativecommons.org/licenses/by/4.0/. Changes: converted to WAV, timed to picture, volume reduced, trimmed/faded to video length.

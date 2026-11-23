@@ -1,0 +1,37 @@
+{
+  "name": "stickman-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Niche-independent stickman video production engine (Remotion + optional Three.js)",
+  "scripts": {
+    "studio": "remotion studio remotion/index.ts",
+    "sve": "tsx scripts/sve.ts",
+    "new": "tsx scripts/sve.ts new",
+    "build": "tsx scripts/sve.ts build",
+    "render": "tsx scripts/sve.ts render",
+    "qc": "tsx scripts/sve.ts qc",
+    "produce": "tsx scripts/sve.ts produce",
+    "action-sheet": "node scripts/action-sheet.mjs",
+    "typecheck": "tsc -p .",
+    "test": "tsx --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^8.17.10",
+    "@remotion/cli": "^4.0.300",
+    "@remotion/renderer": "^4.0.300",
+    "@remotion/three": "^4.0.300",
+    "@remotion/transitions": "^4.0.300",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.300",
+    "three": "^0.170.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/three": "^0.170.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}
