@@ -1,5 +1,7 @@
 # Stickman Video Engine
 
+**Visual identity: Style C, stylized 3D stickman (permanent).** Read [docs/STYLE_GUIDE.md](docs/STYLE_GUIDE.md) before changing characters, lighting, sets or cameras, and re-run `npm run benchmark` afterwards. Reference images are in [docs/benchmark/](docs/benchmark/).
+
 A niche-independent production engine for stickman videos. Its only fixed rule is the **stickman visual identity**. Category, topic, tone, language, duration, format and palette are per-video data.
 
 ```
@@ -14,9 +16,9 @@ Storyboard (director)  ──adapter──▶  VideoSpec (scene data)  ──▶
 | Director | Story, shots, beats, cast, blocking, camera intent | `director/storyboard.ts`, `projects/<id>/storyboard.json` |
 | Adapter | Retiming to the target duration, beats → action tracks, film-language camera → keyframes, audio paths | `adapters/storyboardToSpec.ts` |
 | Scene data | One validated JSON contract (zod) | `schema/scene.ts` |
-| Characters | Fixed proportions; configurable colour, accessory, build and scale | `characters/library.json`, `three/Stickman.tsx` |
-| Animation | 24 deterministic actions as pure functions of time | `animations/library.ts` |
-| 3D | Rig, environments, props, camera, lighting and shadows | `three/` |
+| Characters | Style C rig: connected tapered body, expressive face, hand shapes; locked proportions | `characters/library.json`, `three/Stickman.tsx`, `three/skeleton.ts` (FK/IK/ground contact) |
+| Animation | 30 deterministic actions with weighted gaits, momentum, anticipation and IK `reach` | `animations/library.ts` |
+| 3D | Layered environments, three-point soft-shadow lighting, contact shadows, reusable assets | `three/environments.tsx`, `three/assets.tsx`, `three/props.tsx` |
 | Timeline | Scenes, transitions, captions, overlays, narration/SFX/music sync, encoding | `remotion/` |
 | Audio (optional) | espeak-ng narration plus CC0/CC-BY SFX and music from the Skill's licensed library (read-only) | `audio/index.ts` |
 | CLI + QC | new / build / render / still / qc / produce | `scripts/sve.ts` |
@@ -46,6 +48,8 @@ npm run produce -- my-video                 # build + render + qc
 npm run render -- my-video --quality 1080p --aspect 9:16   # other formats; re-frame the camera for 9:16
 npm run studio                              # Remotion Studio (interactive preview)
 npm run action-sheet                        # QA contact sheet of every action -> out/action-sheet.png
+npm run stills -- my-video 2.5 8 14         # fast review stills from one bundle -> out/my-video/
+npm run benchmark                           # Style C visual benchmark -> out/benchmark/
 npm test && npm run typecheck
 ```
 
