@@ -334,5 +334,9 @@
     }
    ]
   }
- ]
+ ],
+ "music": {
+  "query": "upbeat friendly light",
+  "volume": 0.35
+ }
 }

@@ -13,6 +13,7 @@ import path from 'node:path';
 import {execFileSync, spawnSync} from 'node:child_process';
 import {Storyboard} from '../director/storyboard';
 import {storyboardToSpec, expandChoreography} from '../adapters/storyboardToSpec';
+import {autoFoley} from '../audio/foley';
 import {buildAudio, ENGINE_ROOT, probeDuration} from '../audio';
 import {VideoSpec, resolution, totalFrames} from '../schema/scene';
 import {planOverlays} from '../remotion/Overlays';
@@ -47,7 +48,7 @@ function cmdBuild(pid: string) {
   const parsed = Storyboard.safeParse(JSON.parse(fs.readFileSync(file, 'utf8')));
   if (!parsed.success) return die(`storyboard invalid:\n${parsed.error.issues.map((i) => `  ${i.path.join('.')}: ${i.message}`).join('\n')}`);
   const ex = expandChoreography(parsed.data);
-  const board = ex.board;
+  const board = autoFoley(ex.board);
   if (ex.report.errors.length) die(`choreography invalid:\n${ex.report.errors.map((e) => '  ' + e).join('\n')}`);
   ex.report.log.forEach((l) => console.log(`  ⚔ ${l}`));
   const audio = buildAudio({projectId: pid, publicDir: P('public'), language: board.brief.language, voice: board.voice,

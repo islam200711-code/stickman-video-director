@@ -94,7 +94,7 @@ export const TextOverlay = z.object({
   position: z.enum(['auto', 'top', 'center', 'bottom']).default('auto'), // auto = safe-zone placement away from characters
 });
 
-export const SfxCue = z.object({file: z.string(), at: z.number(), volume: z.number().default(0.8)});
+export const SfxCue = z.object({file: z.string(), at: z.number(), volume: z.number().default(0.8), important: z.boolean().optional()});
 
 export const Narration = z.object({
   text: z.string(),
@@ -125,6 +125,7 @@ export const Scene = z.object({
   text: z.array(TextOverlay).default([]),
   narration: Narration.optional(),
   sfx: z.array(SfxCue).default([]),
+  ambience: z.object({file: z.string(), volume: z.number().default(0.22)}).optional(),
   transitionIn: Transition.default({type: 'cut', duration: 0}),
   /** screen graphics / HUD events (rendered by ui/Hud.tsx), times in scene seconds */
   ui: z.array(z.object({

@@ -111,7 +111,7 @@ export function choreograph(shot: Shot, report: ChoreoReport = {errors: [], warn
             to: away(T, A, (heavy ? 0.9 : 0.28) * ev.force), moveCurve: 'light'});
           if (!heavy) B({who: ev.target!, do: 'guard', at: r3(tc + 0.75), facing: faceTA, expression: 'angry'});
           vfx.push({type: 'impact-flash', at: tc, position: contact, scale: ev.force}, {type: ev.force > 1.15 ? 'ink-burst' : 'sparks', at: tc, position: contact, scale: ev.force});
-          sfx.push({sound: kick ? 'impact heavy' : 'impact punch', at: tc, volume: 0.9});
+          sfx.push({sound: kick ? 'impact heavy' : 'impact punch', at: tc, volume: 0.9, important: ev.force >= 1.3});
           impacts.push({at: tc, strength: 0.6 * ev.force});
           if (heavy) {const land = r3(tc + 0.5); vfx.push({type: 'dust', at: land, position: away(T, A, 0.9 * ev.force), scale: 1.2}, {type: 'shockwave', at: land, position: away(T, A, 0.9 * ev.force), scale: 1}); sfx.push({sound: 'impact wood heavy', at: land, volume: 0.8}); impacts.push({at: land, strength: 0.8});}
         } else if (ev.outcome === 'blocked') {
@@ -145,7 +145,7 @@ export function choreograph(shot: Shot, report: ChoreoReport = {errors: [], warn
         B({who: ev.target!, do: 'thrown', at: release, until: r3(release + 1.0), facing: faceTA, expression: 'scared', intensity: ev.force, to: landPt, moveCurve: 'light'});
         const land = r3(release + 0.7);
         vfx.push({type: 'motion-trail', at: release, actor: ev.target, duration: 0.6, scale: 1.2}, {type: 'dust', at: land, position: landPt, scale: 1.4}, {type: 'shockwave', at: land, position: landPt, scale: 1.1});
-        sfx.push({sound: 'whoosh swish', at: release, volume: 0.8}, {sound: 'impact heavy', at: land, volume: 0.9});
+        sfx.push({sound: 'whoosh swish', at: release, volume: 0.8}, {sound: 'impact heavy', at: land, volume: 0.9, important: true});
         impacts.push({at: land, strength: 1.0 * ev.force});
         recoverIdle(ev.actor, t0 + th.recover, faceAT);
         break;

@@ -14,6 +14,7 @@ import {z} from 'zod';
 import {VideoSpec, Scene as SceneSchema, type ActionCue, type Scene, type SceneCharacter, type Vec3, totalFrames} from '../schema/scene';
 import {buildAutoCamera, detectEvents} from '../director/coverage';
 import {choreograph, type ChoreoReport} from '../choreography/director';
+import {autoFoley} from '../audio/foley';
 import {evaluateCharacter} from '../animations/library';
 
 export type Assets = {
@@ -112,7 +113,7 @@ function buildCamera(shot: Shot, chars: SceneCharacter[], dur: number): z.input<
 
 export function storyboardToSpec(input: StoryboardInput, assets: Assets): AdaptResult {
   const expanded = expandChoreography(Storyboard.parse(input));
-  const board = expanded.board;
+  const board = autoFoley(expanded.board);
   const warnings: string[] = [];
   const fps = board.brief.fps;
   const base = board.shots.map((s) => shotBaseDuration(s, assets.narration[s.id]));
@@ -162,7 +163,8 @@ export function storyboardToSpec(input: StoryboardInput, assets: Assets): AdaptR
       camera,
       text: shot.text.map((x) => ({text: x.text, start: round(x.at * scale), end: round(Math.min(dur, (x.until ?? x.at + 2.5) * scale)), style: x.style, position: x.position})),
       narration: shot.narration ? {text: shot.narration, start: 0.25, audio: narr?.audio, duration: narr?.duration} : undefined,
-      sfx: shot.sfx.flatMap((s) => {const f = assets.sfx[s.sound]; if (!f) {warnings.push(`shot ${shot.id}: sound "${s.sound}" not resolved, skipped`); return [];} return [{file: f, at: round(s.at * scale), volume: s.volume}];}),
+      sfx: shot.sfx.flatMap((s) => {const f = assets.sfx[s.sound]; if (!f) {warnings.push(`shot ${shot.id}: sound "${s.sound}" not resolved, skipped`); return [];} return [{file: f, at: round(s.at * scale), volume: s.volume, important: s.important}];}),
+      ambience: shot.ambience && shot.ambience !== 'none' && assets.sfx[shot.ambience] ? {file: assets.sfx[shot.ambience], volume: shot.ambienceVolume} : undefined,
       transitionIn: {type: i === 0 ? 'cut' : shot.transition, duration: i === 0 ? 0 : shot.transitionDuration},
     };
   });

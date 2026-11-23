@@ -10,6 +10,26 @@ import {resolveCast} from '../characters';
 import {SceneComp} from './SceneComp';
 import {brushWipe, fireWipe, blink} from '../vfx/transitions';
 
+/**
+ * Music ducking + pre-hit silence (event-driven):
+ *  - strong SFX (volume >= 0.7): music dips to 45% around the hit
+ *  - important SFX (heavy impacts): music falls to ~5% for 0.45 s BEFORE the hit, then swells back
+ */
+export function musicDuck(spec: VideoSpec, frame: number): number {
+  const fps = spec.format.fps; const t = frame / fps;
+  let start = 0, k = 1;
+  spec.scenes.forEach((sc, i) => {
+    if (i > 0 && sc.transitionIn.type !== 'cut') start -= sc.transitionIn.duration;
+    for (const s of sc.sfx) {
+      const T = start + s.at;
+      if (s.important && t > T - 0.45 && t < T + 0.7) k = Math.min(k, t < T ? 0.05 + 0.95 * Math.max(0, (T - t - 0.35) / 0.1) : 0.05 + 0.95 * Math.min(1, (t - T) / 0.7));
+      else if (s.volume >= 0.7 && t > T - 0.05 && t < T + 0.4) k = Math.min(k, 0.45);
+    }
+    start += sc.duration;
+  });
+  return k;
+}
+
 const presentation = (type: string) => (type === 'slide' ? slide({direction: 'from-right'}) : type === 'wipe' ? wipe({direction: 'from-left'}) : type === 'brush' ? brushWipe() : type === 'fire' ? fireWipe() : type === 'blink' ? blink() : fade());
 
 export const StickmanVideo: React.FC<{spec: VideoSpecInput}> = ({spec: raw}) => {
@@ -29,7 +49,7 @@ export const StickmanVideo: React.FC<{spec: VideoSpecInput}> = ({spec: raw}) => 
           return items;
         })}
       </TransitionSeries>
-      {spec.music && <Audio src={staticFile(spec.music.file)} volume={(f) => spec.music!.volume * interpolate(f, [0, fps, durationInFrames - 1.5 * fps, durationInFrames], [0, 1, 1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})} />}
+      {spec.music && <Audio src={staticFile(spec.music.file)} volume={(f) => spec.music!.volume * musicDuck(spec, f) * interpolate(f, [0, fps, durationInFrames - 1.5 * fps, durationInFrames], [0, 1, 1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})} />}
     </AbsoluteFill>
   );
 };

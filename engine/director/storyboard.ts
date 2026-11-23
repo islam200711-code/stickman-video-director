@@ -81,7 +81,9 @@ export const Shot = z.object({
   beats: z.array(Beat).default([]),
   props: z.array(z.object({kind: z.string(), at: Vec3, rotation: z.number().default(0), scale: z.number().default(1), color: z.string().optional(), appearAt: z.number().optional(), disappearAt: z.number().optional(), move: z.object({to: Vec3, start: z.number(), end: z.number(), roll: z.boolean().default(false), weight: z.enum(['smooth', 'heavy', 'light', 'drop']).default('smooth')}).optional()})).default([]),
   text: z.array(z.object({text: z.string(), at: z.number(), until: z.number().optional(), style: z.enum(['title', 'caption', 'label', 'lower-third']).default('label'), position: z.enum(['auto', 'top', 'center', 'bottom']).default('auto')})).default([]),
-  sfx: z.array(z.object({sound: z.string(), at: z.number(), volume: z.number().default(0.8)})).default([]),
+  sfx: z.array(z.object({sound: z.string(), at: z.number(), volume: z.number().default(0.8), important: z.boolean().optional()})).default([]),
+  ambience: z.string().default('auto'),   // ambience cue ('auto' = from environment, 'none', or a cue/query)
+  ambienceVolume: z.number().default(0.22),
   /** choreographed interactions — expanded by choreography/director.ts into beats, VFX, SFX and camera impacts */
   actions: z.array(ActionEvent).default([]),
   vfx: z.array(z.object({type: z.string(), at: z.number(), position: Vec3.optional(), dir: Vec3.optional(), scale: z.number().default(1), color: z.string().optional(), duration: z.number().optional(), actor: z.string().optional()})).default([]),
@@ -107,9 +109,11 @@ export const Storyboard = z.object({
   title: z.string(),
   brief: Brief,
   cast: z.array(z.union([z.string(), CharacterProfile])).default([]),
-  voice: z.object({provider: z.enum(['espeak', 'none', 'files']).default('espeak'), voice: z.string().optional(), rate: z.number().default(155), files: z.record(z.string()).optional()}).default({}),
+  /** no narration unless a project explicitly asks for it */
+  voice: z.object({provider: z.enum(['espeak', 'none', 'files']).default('none'), voice: z.string().optional(), rate: z.number().default(155), files: z.record(z.string()).optional()}).default({}),
   music: z.object({query: z.string().optional(), file: z.string().optional(), volume: z.number().default(0.12)}).optional(),
   captions: z.boolean().default(true),
+  foley: z.enum(['auto', 'none', 'done']).default('auto'),
   style: z.object({lineWidth: z.number().default(1), font: z.string().optional(), characterMode: z.enum(['stylized_3d', 'flat_2d', 'hybrid_2_5d']).default('stylized_3d')}).default({}),
   shots: z.array(Shot).min(1),
 });

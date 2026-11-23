@@ -165,3 +165,27 @@ test('action director: every interaction type expands without errors', () => {
     assert.ok(shot.beats.some((b) => b.who === 'b'), `${type}: partner reacts`);
   }
 });
+
+import {footsteps, autoFoley} from '../audio/foley';
+import {musicDuck} from '../remotion/StickmanVideo';
+
+test('sound: footsteps follow gait distance; no narration by default; HUD cues follow ui events', () => {
+  const sh = ShotSchema.parse({id: 'f', environment: 'park', duration: 4, blocking: {a: {at: [-3, 0, 0]}}, beats: [{who: 'a', do: 'walk', at: 0, until: 3, to: [3, 0, 0]}],
+    ui: [{type: 'terminal', at: 0.5, lines: ['abc'], stamp: 'OK'}, {type: 'alert', at: 2}]});
+  const steps = footsteps(sh, 4);
+  assert.ok(steps.length >= 8 && steps.length <= 10, `6 m walk at 0.65 m per step -> ~9 steps, got ${steps.length}`);
+  const board = Storyboard.parse({id: 'x', title: 'x', brief: {topic: 'x'}, shots: [sh]});
+  assert.equal(board.voice.provider, 'none', 'no narration unless requested');
+  const f = autoFoley(board).shots[0];
+  assert.ok(f.sfx.some((s) => s.sound === 'footstep grass'));
+  assert.ok(f.sfx.some((s) => s.sound === 'ui confirm') && f.sfx.filter((s) => s.sound === 'ui error').length === 3);
+  assert.equal(f.ambience, 'amb outdoor');
+});
+
+test('sound: music ducks under strong SFX and falls silent before important impacts', () => {
+  const spec = VideoSpec.parse({id: 'd', title: 'd', cast: [], scenes: [{id: 's', duration: 4, environment: {preset: 'studio'}, camera: {keys: [{t: 0, position: [0, 1, 5], lookAt: [0, 1, 0]}]},
+    sfx: [{file: 'a.wav', at: 2, volume: 0.9, important: true}, {file: 'b.wav', at: 3.5, volume: 0.8}]}]});
+  assert.ok(musicDuck(spec, Math.round(1.8 * 24)) < 0.1, 'pre-hit silence');
+  assert.equal(musicDuck(spec, Math.round(1.0 * 24)), 1, 'full level away from hits');
+  assert.equal(musicDuck(spec, Math.round(3.6 * 24)), 0.45, 'ducked under strong sfx');
+});

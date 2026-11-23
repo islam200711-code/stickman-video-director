@@ -9,6 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync, spawnSync} from 'node:child_process';
+import {CUE_MAP} from './foley';
 
 export const ENGINE_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 export const AUDIO_LIBRARY = path.resolve(ENGINE_ROOT, '../skills/directing-stickman-videos/assets/b-audio-library');
@@ -53,7 +54,7 @@ export function loadCatalog(): CatalogAsset[] {
 /** Deterministic search: exact id, else best tag/title/category match; CC0 preferred on ties. */
 export function findAsset(query: string, kind: 'sfx' | 'music'): CatalogAsset | undefined {
   const lib = loadCatalog();
-  const exact = lib.find((a) => a.id === query);
+  const exact = lib.find((a) => a.id === (CUE_MAP[query] ?? query));
   if (exact) return exact;
   const words = query.toLowerCase().split(/[\s,]+/).filter(Boolean);
   const pool = lib.filter((a) => (kind === 'music' ? a.kind === 'music' : a.kind !== 'music'));
@@ -80,7 +81,7 @@ export type AudioResult = {
 export function buildAudio(opts: {
   projectId: string; publicDir: string; language: string;
   voice: {provider: string; voice?: string; rate?: number; files?: Record<string, string>};
-  shots: {id: string; narration?: string; sfx: {sound: string}[]}[];
+  shots: {id: string; narration?: string; sfx: {sound: string}[]; ambience?: string}[];
   music?: {query?: string; file?: string};
   baseDir: string;
 }): AudioResult {
@@ -119,7 +120,7 @@ export function buildAudio(opts: {
   if (opts.voice.provider === 'espeak' && provider?.available()) res.credits.push('Narration: synthesized with eSpeak NG (GPL-3.0 software; generated audio is not encumbered).');
 
   // sfx
-  const queries = [...new Set(opts.shots.flatMap((s) => s.sfx.map((x) => x.sound)))];
+  const queries = [...new Set([...opts.shots.flatMap((s) => s.sfx.map((x) => x.sound)), ...opts.shots.map((s) => s.ambience).filter((a): a is string => !!a && a !== 'none' && a !== 'auto')])];
   for (const q of queries) {
     const local = path.resolve(opts.baseDir, q);
     const asset = fs.existsSync(local) ? undefined : findAsset(q, 'sfx');
