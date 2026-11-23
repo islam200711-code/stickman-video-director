@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync, spawnSync} from 'node:child_process';
 import {Storyboard} from '../director/storyboard';
-import {storyboardToSpec} from '../adapters/storyboardToSpec';
+import {storyboardToSpec, expandChoreography} from '../adapters/storyboardToSpec';
 import {buildAudio, ENGINE_ROOT, probeDuration} from '../audio';
 import {VideoSpec, resolution, totalFrames} from '../schema/scene';
 import {planOverlays} from '../remotion/Overlays';
@@ -46,7 +46,10 @@ function cmdBuild(pid: string) {
   if (!fs.existsSync(file)) die(`missing ${file}`);
   const parsed = Storyboard.safeParse(JSON.parse(fs.readFileSync(file, 'utf8')));
   if (!parsed.success) return die(`storyboard invalid:\n${parsed.error.issues.map((i) => `  ${i.path.join('.')}: ${i.message}`).join('\n')}`);
-  const board = parsed.data;
+  const ex = expandChoreography(parsed.data);
+  const board = ex.board;
+  if (ex.report.errors.length) die(`choreography invalid:\n${ex.report.errors.map((e) => '  ' + e).join('\n')}`);
+  ex.report.log.forEach((l) => console.log(`  ⚔ ${l}`));
   const audio = buildAudio({projectId: pid, publicDir: P('public'), language: board.brief.language, voice: board.voice,
     shots: board.shots, music: board.music, baseDir: projectDir(pid)});
   const {spec, warnings, shotList} = storyboardToSpec(board, audio);

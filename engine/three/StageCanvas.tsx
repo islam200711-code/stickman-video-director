@@ -14,6 +14,7 @@ import {cameraAt} from './camera';
 import {Html3DLabel} from './Label';
 import {Ambient, Birds, defaultAmbient} from './ambient';
 import {getLook} from './looks';
+import {Stickman2D} from '../hybrid/Stickman2D';
 
 const MovingProp: React.FC<{p: Scene['props'][number]; t: number}> = ({p, t}) => {
   let pos = p.position; let roll = 0, wobble = 0;
@@ -53,7 +54,7 @@ export function resolveGaze(scene: Scene, frames: Record<string, CharacterFrame>
   return undefined;
 }
 
-export const StageCanvas: React.FC<{scene: Scene; cast: Record<string, CharacterProfile>; lineWidth: number; render?: {shadowMap: number; msaa: boolean; softShadows: boolean}}> = ({scene, cast, lineWidth, render = {shadowMap: 1024, msaa: true, softShadows: true}}) => {
+export const StageCanvas: React.FC<{scene: Scene; cast: Record<string, CharacterProfile>; lineWidth: number; characterMode?: 'stylized_3d' | 'flat_2d' | 'hybrid_2_5d'; render?: {shadowMap: number; msaa: boolean; softShadows: boolean}}> = ({scene, cast, lineWidth, characterMode = 'stylized_3d', render = {shadowMap: 1024, msaa: true, softShadows: true}}) => {
   const frame = useCurrentFrame();
   const {fps, width, height} = useVideoConfig();
   const t = frame / fps;
@@ -61,6 +62,8 @@ export const StageCanvas: React.FC<{scene: Scene; cast: Record<string, Character
   const env = scene.environment;
   const indoor = isIndoor(env.preset);
   const ambient = env.ambient === 'auto' ? defaultAmbient(env.preset, env.timeOfDay, indoor) : env.ambient;
+  const mode = scene.characterMode ?? characterMode;
+  const camNow = cameraAt(scene.camera, t);
   const frames: Record<string, CharacterFrame> = {};
   for (const ch of scene.characters) frames[ch.id] = evaluateCharacter(ch, t, scene.duration);
   return (
@@ -76,7 +79,10 @@ export const StageCanvas: React.FC<{scene: Scene; cast: Record<string, Character
         const profile = cast[ch.profile ?? ch.id];
         if (!profile) throw new Error(`Scene ${scene.id}: character "${ch.id}" is not in the cast`);
         const cf = frames[ch.id];
-        return <React.Fragment key={ch.id}><Stickman profile={profile} frame={cf} time={t} lineWidth={lineWidth} gaze={resolveGaze(scene, frames, ch.id, profile.scale)} />
+        const gaze = resolveGaze(scene, frames, ch.id, profile.scale);
+        return <React.Fragment key={ch.id}>{mode === 'stylized_3d'
+          ? <Stickman profile={profile} frame={cf} time={t} lineWidth={lineWidth} gaze={gaze} />
+          : <Stickman2D profile={profile} frame={cf} time={t} lineWidth={lineWidth} gaze={gaze} cameraPos={camNow.position} mode={mode} />}
           {ch.label && <Html3DLabel text={ch.label} position={[cf.position[0], 2.25 * profile.scale, cf.position[2]]} />}</React.Fragment>;
       })}
     </ThreeCanvas>

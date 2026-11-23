@@ -67,7 +67,7 @@ test('Style C rig keeps locked bone lengths and feet on/above ground for every a
     const sk = solveSkeleton(ACTION_FNS[a](t, {intensity: 1, travel: 0, seed: 2, speed: 1, accel: 0}));
     for (const arm of [sk.lArm, sk.rArm]) {eq(arm.shoulder.distanceTo(arm.elbow), PROPORTIONS.upperArm, `${a} upper arm`); eq(arm.elbow.distanceTo(arm.wrist), PROPORTIONS.forearm, `${a} forearm`);}
     for (const leg of [sk.lLeg, sk.rLeg]) {eq(leg.hip.distanceTo(leg.knee), PROPORTIONS.thigh, `${a} thigh`); eq(leg.knee.distanceTo(leg.ankle), PROPORTIONS.shin, `${a} shin`);}
-    if (a !== 'fall' && a !== 'lying') assert.ok(Math.min(sk.lLeg.ankle.y, sk.rLeg.ankle.y) >= 0.045 - 1e-6, `${a} foot below ground`);
+    if (!['fall', 'lying', 'knockdown', 'thrown'].includes(a)) assert.ok(Math.min(sk.lLeg.ankle.y, sk.rLeg.ankle.y) >= 0.045 - 1e-6, `${a} foot below ground`);
     if (a === 'lying') assert.ok(sk.headCenter.y >= PROPORTIONS.head - 0.02, 'lying head must not sink into the floor');
   }
 });
@@ -126,5 +126,42 @@ test('safe zones: projected heads are found and text boxes stay inside title-saf
   for (const sl of ['top', 'bottom', 'side-left', 'side-right'] as const) {
     const b = textBox('A reasonably long caption line for testing', 'caption', sl, 1280, 720);
     assert.ok(b.x0 >= 1280 * 0.06 - 1 && b.x1 <= 1280 * 0.94 + 1 && b.y0 >= 720 * 0.06 - 1 && b.y1 <= 720 * 0.94 + 1, `${sl} outside title-safe`);
+  }
+});
+
+import {choreograph} from '../choreography/director';
+import {Shot as ShotSchema} from '../director/storyboard';
+import {ACTION_TIMING} from '../animations/library';
+
+const mkShot = (actions: unknown[], blocking: Record<string, unknown>) => ShotSchema.parse({id: 't', environment: 'studio', blocking, actions});
+
+test('action director: reaction, VFX, SFX and camera impact land exactly on the contact frame', () => {
+  const {shot, report} = choreograph(mkShot([{type: 'punch', at: 1, actor: 'a', target: 'b'}], {a: {at: [-0.46, 0, 0]}, b: {at: [0.46, 0, 0]}}));
+  assert.equal(report.errors.length, 0, report.errors.join('; '));
+  const tc = 1 + ACTION_TIMING.punch.contact;
+  assert.ok(shot.beats.some((b) => b.who === 'b' && b.do === 'hit' && Math.abs(b.at - tc) < 1e-6), 'target reacts at contact');
+  assert.ok(shot.vfx.some((v) => v.type === 'impact-flash' && Math.abs(v.at - tc) < 1e-6));
+  assert.ok(shot.sfx.some((s) => s.sound.includes('impact') && Math.abs(s.at - tc) < 1e-6));
+  assert.ok(shot.cameraImpacts.some((c) => Math.abs(c.at - tc) < 1e-6));
+  const strike = shot.beats.find((b) => b.who === 'a' && b.do === 'punch')!;
+  assert.ok(strike.reach?.right && strike.facing === 90, 'attacker faces target and aims an IK contact point');
+  assert.equal(shot.actions.length, 0, 'idempotent: actions consumed');
+});
+
+test('action director: validation — unknown character, double booking, auto-approach', () => {
+  assert.ok(choreograph(mkShot([{type: 'punch', at: 1, actor: 'a', target: 'ghost'}], {a: {at: [0, 0, 0]}})).report.errors.some((e) => e.includes('unknown character')));
+  const dbl = choreograph(mkShot([{type: 'punch', at: 1, actor: 'a', target: 'b'}, {type: 'kick', at: 1.3, actor: 'a', target: 'b'}], {a: {at: [-0.46, 0, 0]}, b: {at: [0.46, 0, 0]}}));
+  assert.ok(dbl.report.errors.some((e) => e.includes('double-booked')));
+  const far = choreograph(mkShot([{type: 'handshake', at: 2, actor: 'a', target: 'b'}], {a: {at: [-3, 0, 0]}, b: {at: [3, 0, 0]}}));
+  assert.equal(far.report.errors.length, 0);
+  assert.ok(far.report.warnings.some((w) => w.includes('auto-approach')));
+  assert.ok(far.shot.beats.some((b) => b.who === 'a' && (b.do === 'walk' || b.do === 'run') && b.until === 2));
+});
+
+test('action director: every interaction type expands without errors', () => {
+  for (const type of ['punch', 'kick', 'grab', 'throw', 'push', 'pull', 'rescue', 'handshake', 'highfive', 'transfer']) {
+    const {report, shot} = choreograph(mkShot([{type, at: 1, actor: 'a', target: 'b', object: 'coffee'}], {a: {at: [-0.45, 0, 0]}, b: {at: [0.45, 0, 0]}}));
+    assert.equal(report.errors.length, 0, `${type}: ${report.errors.join('; ')}`);
+    assert.ok(shot.beats.some((b) => b.who === 'b'), `${type}: partner reacts`);
   }
 });

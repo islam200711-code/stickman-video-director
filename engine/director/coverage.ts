@@ -16,22 +16,24 @@ import {headWorld} from '../animations/head';
 import type {Shot} from './storyboard';
 
 export type ShotType = 'establishing' | 'wide' | 'two-shot' | 'medium' | 'close' | 'extreme-close' | 'over-shoulder';
-type Event = {t: number; kind: 'dialogue' | 'reaction' | 'emphasis' | 'impact' | 'reveal' | 'enter'; who?: string; priority: number};
+type Event = {t: number; kind: 'dialogue' | 'reaction' | 'emphasis' | 'impact' | 'reveal' | 'enter' | 'action'; who?: string; with?: string; priority: number};
 export type PlannedShot = {t: number; type: ShotType; subject: string[]; from?: string; label: string};
 
 const MIN_HOLD = 1.25;
 const FOV: Record<ShotType, number> = {establishing: 42, wide: 40, 'two-shot': 36, medium: 34, close: 28, 'extreme-close': 24, 'over-shoulder': 32};
 const STRONG = new Set(['surprised', 'scared', 'angry', 'excited', 'sad']);
-const PRIORITY = {impact: 5, emphasis: 4, reaction: 3, reveal: 3, dialogue: 2, enter: 1} as const;
+/** beats produced by the action director: framed by the 'action' event, never cut to a reaction close-up mid-move */
+const CHOREO = new Set(['guard', 'punch', 'kick', 'block', 'dodge', 'grab', 'throw', 'pull', 'push', 'hit', 'stagger', 'knockdown', 'thrown', 'handshake', 'highfive', 'give', 'receive', 'rescue', 'rescued', 'huddle']);
+const PRIORITY = {impact: 5, emphasis: 4, action: 4, reaction: 3, reveal: 3, dialogue: 2, enter: 1} as const;
 const r3 = (x: number) => Math.round(x * 1000) / 1000;
 
 export function detectEvents(shot: Shot, scale: number): Event[] {
   const ev: Event[] = [];
   for (const b of shot.beats) {
     const t = b.at * scale;
-    if (b.event) ev.push({t, kind: b.event, who: b.who, priority: PRIORITY[b.event]});
+    if (b.event) ev.push({t, kind: b.event, who: b.who, with: b.with, priority: PRIORITY[b.event]});
     else if (b.do === 'talk' || b.do === 'argue') ev.push({t, kind: 'dialogue', who: b.who, priority: PRIORITY.dialogue});
-    else if (b.expression && STRONG.has(b.expression)) ev.push({t, kind: 'reaction', who: b.who, priority: PRIORITY.reaction});
+    else if (b.expression && STRONG.has(b.expression) && !CHOREO.has(b.do)) ev.push({t, kind: 'reaction', who: b.who, priority: PRIORITY.reaction});
     else if ((b.do === 'walk' || b.do === 'run' || b.do === 'escape') && b.to) ev.push({t, kind: 'enter', who: b.who, priority: PRIORITY.enter});
   }
   for (const p of shot.props) {
@@ -47,6 +49,11 @@ export function planShots(shot: Shot, chars: SceneCharacter[], dur: number, scal
   const events = detectEvents(shot, scale).filter((e) => e.t < dur - 0.6);
   const impacts = events.filter((e) => e.kind === 'impact').map((e) => ({t: r3(e.t), strength: 1}));
   const plan: PlannedShot[] = [{t: 0, type: ids.length > 1 || opening === 'establishing' ? opening : 'medium', subject: ids, label: `${opening === 'establishing' ? 'EST' : 'WS'} ${ids.join('+') || 'set'}`}];
+  // an action that starts before the opening could hold its minimum length opens the scene on its own framing
+  const firstAction = events.find((e) => e.kind === 'action');
+  if (firstAction && firstAction.t < MIN_HOLD && firstAction.who && firstAction.with) {
+    plan[0] = {t: 0, type: 'two-shot', subject: [firstAction.who, firstAction.with], label: `action:2S profile ${firstAction.who}×${firstAction.with} (opening)`};
+  }
   let lastSpeaker: string | undefined;
   for (const e of events) {
     const prev = plan[plan.length - 1];
@@ -70,6 +77,7 @@ export function planShots(shot: Shot, chars: SceneCharacter[], dur: number, scal
       case 'impact': p = {t: Math.max(0, e.t - 0.1), type: 'wide', subject: ids, label: 'impact:WS all'}; break;
       case 'reveal': p = {t: e.t, type: 'medium', subject: who ? [who] : ids, label: `reveal:MS→WS ${who ?? 'all'}`}; break;
       case 'enter': p = {t: e.t, type: 'wide', subject: who ? [who] : ids, label: `enter:WS track ${who}`}; break;
+      case 'action': p = {t: Math.max(0, e.t - 0.15), type: 'two-shot', subject: who && e.with ? [who, e.with] : ids, label: `action:2S profile ${who}×${e.with ?? ''}`}; break;
     }
     if (prev.type === p.type && prev.subject.join() === p.subject.join() && prev.from === p.from) continue; // no jump cut to the same framing
     plan.push(p);
@@ -134,6 +142,16 @@ function frameShot(p: PlannedShot, chars: SceneCharacter[], t0: number, t1: numb
       default: return {position: front(frontYaw, Math.max(8.5, spread(t) * 1.4 + 6) - drift * 0.6, f, 1.85), lookAt: [r3(f[0]), 1.1, r3(f[2])] as Vec3, fov};
     }
   };
+  if (p.label.startsWith('action') && p.subject.length === 2) {
+    const a = pos(p.subject[0], t0), c = pos(p.subject[1], t0);
+    const dx = c[0] - a[0], dz = c[2] - a[2], L = Math.hypot(dx, dz) || 1;
+    let px = -dz / L, pz = dx / L;
+    if (px * Math.sin(frontYaw) + pz * Math.cos(frontYaw) < 0) {px = -px; pz = -pz;}
+    const yaw = Math.atan2(px, pz);
+    const mk2 = (drift: number) => {const f = centroid(t0); const d = Math.max(3.6, L * 1.6 + 2.4) - drift * 0.35;
+      return {position: front(yaw, d, f, 1.45), lookAt: [r3(f[0]), 1.15, r3(f[2])] as Vec3, fov: FOV['two-shot']};};
+    return [{t: t0, ...mk2(0)}, {t: t1, ...mk2(1)}];
+  }
   const isTrack = p.label.startsWith('enter');
   const isReveal = p.label.startsWith('reveal');
   if (isReveal) return [{t: t0, ...mk(t0, 0)}, {t: t1, ...{...mk(t1, 0), position: (() => {const m = mk(t1, 0).position, f = centroid(t1); return [r3(f[0] + (m[0] - f[0]) * 2.1), 2.4, r3(f[2] + (m[2] - f[2]) * 2.1)] as Vec3;})()}}];

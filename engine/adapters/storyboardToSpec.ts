@@ -9,10 +9,11 @@
  *  - convert beats into per-character action tracks
  *  - generate camera keyframes from film-language shot/move descriptions
  */
-import {Storyboard, type Shot, type StoryboardInput} from '../director/storyboard';
+import {Storyboard, type Shot, type StoryboardInput, type Storyboard as StoryboardT} from '../director/storyboard';
 import {z} from 'zod';
 import {VideoSpec, Scene as SceneSchema, type ActionCue, type Scene, type SceneCharacter, type Vec3, totalFrames} from '../schema/scene';
 import {buildAutoCamera, detectEvents} from '../director/coverage';
+import {choreograph, type ChoreoReport} from '../choreography/director';
 import {evaluateCharacter} from '../animations/library';
 
 export type Assets = {
@@ -20,7 +21,13 @@ export type Assets = {
   sfx: Record<string, string>;          // storyboard sound query -> public path
   music?: string;
 };
-export type AdaptResult = {spec: VideoSpec; warnings: string[]; shotList: string[]};
+export type AdaptResult = {spec: VideoSpec; warnings: string[]; shotList: string[]; choreo: ChoreoReport};
+
+/** Expand every shot's choreographed actions (idempotent: actions are emptied). Run before the audio stage so SFX cues resolve. */
+export function expandChoreography(board: StoryboardT): {board: StoryboardT; report: ChoreoReport} {
+  const report: ChoreoReport = {errors: [], warnings: [], log: []};
+  return {board: {...board, shots: board.shots.map((s) => choreograph(s, report).shot)}, report};
+}
 
 // Style C lens rules: wider lens for space, longer lens (compression) for faces.
 const SHOT_DIST = {establishing: 14, wide: 8.5, 'two-shot': 5.4, medium: 4.2, close: 2.6, 'extreme-close': 1.5, low: 5.8, high: 7, 'over-shoulder': 2.2} as const;
@@ -44,7 +51,7 @@ function buildCharacters(shot: Shot, scale: number, warnings: string[]): SceneCh
     const beats = shot.beats.filter((b) => b.who === id).sort((a, b) => a.at - b.at);
     const track: ActionCue[] = beats.map((b) => ({
       action: b.do, start: round(b.at * scale), end: b.until !== undefined ? round(b.until * scale) : undefined,
-      speed: b.speed ?? 1, intensity: b.intensity ?? 1, expression: b.expression, facing: b.facing, to: b.to, prop: b.prop, reach: b.reach, target: b.lookAt, lookAtCharacter: b.lookAtCharacter, moveCurve: b.moveCurve,
+      speed: b.speed ?? 1, intensity: b.intensity ?? 1, expression: b.expression, facing: b.facing, to: b.to, prop: b.prop, reach: b.reach, target: b.lookAt, lookAtCharacter: b.lookAtCharacter, moveCurve: b.moveCurve, reachRamp: b.reachRamp, reachAt: b.reachAt !== undefined ? b.reachAt * scale : undefined, reachUntil: b.reachUntil !== undefined ? b.reachUntil * scale : undefined,
     }));
     if (!track.length || track[0].start > 0) track.unshift({action: 'idle', start: 0, speed: 1, intensity: 1});
     return {id, label: block.label, position: block.at, facing: block.facing, expression: block.expression, track};
@@ -104,7 +111,8 @@ function buildCamera(shot: Shot, chars: SceneCharacter[], dur: number): z.input<
 }
 
 export function storyboardToSpec(input: StoryboardInput, assets: Assets): AdaptResult {
-  const board = Storyboard.parse(input);
+  const expanded = expandChoreography(Storyboard.parse(input));
+  const board = expanded.board;
   const warnings: string[] = [];
   const fps = board.brief.fps;
   const base = board.shots.map((s) => shotBaseDuration(s, assets.narration[s.id]));
@@ -142,8 +150,10 @@ export function storyboardToSpec(input: StoryboardInput, assets: Assets): AdaptR
       camera.impacts = detectEvents(shot, scale).filter((e) => e.kind === 'impact').map((e) => ({t: round(e.t), strength: 1}));
       shotList.push(`${shot.id}: ${shot.camera.shot} ${shot.camera.move}`);
     }
+    camera.impacts = [...(camera.impacts ?? []), ...shot.cameraImpacts.map((c) => ({t: round(c.at * scale), strength: c.strength}))];
     return {
-      look: shot.look,
+      vfx: shot.vfx.map((v) => ({...v, at: round(v.at * scale), duration: v.duration !== undefined ? v.duration * scale : undefined})),
+      look: shot.look, characterMode: shot.characterMode,
       id: shot.id, duration: dur,
       environment: {preset: shot.environment, palette: shot.palette, timeOfDay: shot.timeOfDay, ambient: shot.ambient},
       characters,
@@ -161,11 +171,12 @@ export function storyboardToSpec(input: StoryboardInput, assets: Assets): AdaptR
     id: board.id, title: board.title,
     meta: {category: board.brief.category, language: board.brief.language, tone: board.brief.tone},
     format: {aspect: board.brief.aspect, quality: board.brief.quality, fps},
-    style: {lineWidth: board.style.lineWidth, ...(board.style.font ? {font: board.style.font} : {})},
+    style: {lineWidth: board.style.lineWidth, characterMode: board.style.characterMode, ...(board.style.font ? {font: board.style.font} : {})},
     cast, captions: board.captions,
     music: assets.music ? {file: assets.music, volume: board.music?.volume ?? 0.12} : undefined,
     scenes,
   });
   if (board.brief.targetDuration && totalFrames(spec) !== Math.round(board.brief.targetDuration * fps)) warnings.push('total frame count does not match target');
-  return {spec, warnings, shotList};
+  warnings.push(...expanded.report.warnings);
+  return {spec, warnings, shotList, choreo: expanded.report};
 }

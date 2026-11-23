@@ -12,8 +12,10 @@ const args = process.argv.slice(2);
 const id = args[0];
 const oi = args.indexOf('--out');
 const out = oi >= 0 ? args[oi + 1] : path.join(ENGINE_ROOT, 'out', id);
-const times = args.slice(1).filter((a, i, arr) => !a.startsWith('--') && arr[i - 1] !== '--out').map(Number);
+const mi = args.indexOf('--mode');
+const times = args.slice(1).filter((a, i, arr) => !a.startsWith('--') && arr[i - 1] !== '--out' && arr[i - 1] !== '--mode').map(Number);
 const spec = JSON.parse(fs.readFileSync(path.join(ENGINE_ROOT, 'public', 'projects', id, 'spec.json'), 'utf8'));
+if (mi >= 0) {spec.style = {...(spec.style ?? {}), characterMode: args[mi + 1]};}
 fs.mkdirSync(out, {recursive: true});
 const serveUrl = await bundle({entryPoint: path.join(ENGINE_ROOT, 'remotion/index.ts'), publicDir: path.join(ENGINE_ROOT, 'public')});
 const browser = await openBrowser('chrome', {browserExecutable: process.env.REMOTION_CHROME ?? '/opt/pw-browsers/chromium', chromiumOptions: {gl: 'angle'}});

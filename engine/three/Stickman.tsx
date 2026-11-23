@@ -96,8 +96,8 @@ const Hand: React.FC<{arm: ArmJoints; shape: HandShape; side: 1 | -1; mat: THREE
 };
 
 /* ---------- face ---------- */
-type FaceDef = {mouth: 'line' | 'smile' | 'grin' | 'frown' | 'o' | 'wavy' | 'smirk' | 'flat'; brow: number; browY: number; eyeH: number; pupil: [number, number]; blush: boolean; lid?: number};
-const FACE: Record<Expression, FaceDef> = {
+export type FaceDef = {mouth: 'line' | 'smile' | 'grin' | 'frown' | 'o' | 'wavy' | 'smirk' | 'flat'; brow: number; browY: number; eyeH: number; pupil: [number, number]; blush: boolean; lid?: number};
+export const FACE: Record<Expression, FaceDef> = {
   neutral: {mouth: 'line', brow: 0, browY: 0, eyeH: 1, pupil: [0, 0], blush: false},
   happy: {mouth: 'smile', brow: 0.12, browY: 0.008, eyeH: 0.9, pupil: [0, 0], blush: true},
   excited: {mouth: 'grin', brow: 0.15, browY: 0.02, eyeH: 1.1, pupil: [0, 0.004], blush: true},
@@ -135,7 +135,7 @@ function mouthGeo(kind: string) {
 }
 
 /** Cross-fade facial parameters between expressions (brows/eyes/pupils glide, mouth swaps mid-way). */
-function blendFace(a: FaceDef, b: FaceDef, k: number): FaceDef {
+export function blendFace(a: FaceDef, b: FaceDef, k: number): FaceDef {
   const l = (x: number, y: number) => x + (y - x) * k;
   return {mouth: k < 0.5 ? a.mouth : b.mouth, brow: l(a.brow, b.brow), browY: l(a.browY, b.browY), eyeH: l(a.eyeH, b.eyeH),
     pupil: [l(a.pupil[0], b.pupil[0]), l(a.pupil[1], b.pupil[1])], blush: k < 0.5 ? a.blush : b.blush, lid: l(a.lid ?? 0, b.lid ?? 0)};

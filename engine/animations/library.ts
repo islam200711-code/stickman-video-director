@@ -91,6 +91,24 @@ function gait(t: number, c: Ctx, stride: number, run: boolean): Pose {
 
 const reactIn = (t: number, d = 0.28) => backOut(t / d);
 
+
+/** Phase timing (seconds) for choreographed actions: shared by poses, director, VFX and SFX. */
+export const ACTION_TIMING = {
+  punch: {anticipation: 0.2, contact: 0.3, followThrough: 0.42, recover: 0.8},
+  kick: {anticipation: 0.26, contact: 0.4, followThrough: 0.56, recover: 0.95},
+  block: {anticipation: 0.12, contact: 0.3, followThrough: 0.45, recover: 0.8},
+  dodge: {anticipation: 0.12, contact: 0.3, followThrough: 0.55, recover: 0.9},
+  grab: {anticipation: 0.15, contact: 0.32, followThrough: 0.6, recover: 0.9},
+  throw: {anticipation: 0.4, contact: 0.58, followThrough: 0.75, recover: 1.1},
+  handshake: {anticipation: 0.15, contact: 0.42, followThrough: 1.2, recover: 1.5},
+  highfive: {anticipation: 0.15, contact: 0.38, followThrough: 0.5, recover: 0.8},
+  give: {anticipation: 0.15, contact: 0.5, followThrough: 0.9, recover: 1.2},
+  rescue: {anticipation: 0.2, contact: 0.6, followThrough: 1.4, recover: 1.7},
+  push: {anticipation: 0.2, contact: 0.35, followThrough: 0.6, recover: 0.9},
+  pull: {anticipation: 0.2, contact: 0.35, followThrough: 0.9, recover: 1.2},
+} as const;
+export type TimedAction = keyof typeof ACTION_TIMING;
+
 export const ACTION_FNS: Record<Action, (t: number, c: Ctx) => Pose> = {
   idle: (t, c) => mix(REST, {
     y: breathe(t, c.seed), side: Math.sin(t * 0.55 + c.seed) * 0.018, headRoll: Math.sin(t * 0.7 + c.seed) * 0.035, headYaw: Math.sin(t * 0.33 + c.seed) * 0.06,
@@ -169,6 +187,83 @@ export const ACTION_FNS: Record<Action, (t: number, c: Ctx) => Pose> = {
     return mix(ACTION_FNS.idle(t, c), {headPitch: -0.05, lArm: L(1.15, 0.05 + 0.4 * k, 1.2), rArm: L(1.15, 0.05 + 0.4 * k, 1.2), lHand: 'open', rHand: 'open'});},
   nod: (t, c) => mix(ACTION_FNS.idle(t, c), {headPitch: 0.16 * Math.max(0, Math.sin(t * TAU * 1.6)) * c.intensity}),
   headshake: (t, c) => mix(ACTION_FNS.idle(t, c), {headYaw: 0.32 * Math.sin(t * TAU * 1.8) * c.intensity, headPitch: 0.05}),
+
+  // ---------------- choreography actions (driven by choreography/director.ts) ----------------
+  // Phase times live in ACTION_TIMING so the director can align contact, VFX and SFX exactly.
+  guard: (t, c) => mix(REST, {y: -0.05 + breathe(t, c.seed), lean: 0.12, twist: -0.1, lArm: L(0.95, 0.12, 2.05), rArm: L(0.85, 0.15, 2.15), lLeg: L(0.3, 0.1, 0.28), rLeg: L(-0.25, 0.1, 0.16), lHand: 'fist', rHand: 'fist'}),
+  punch: (t, c) => {
+    const T = ACTION_TIMING.punch, k = c.intensity, g = ACTION_FNS.guard(t, c);
+    if (t < T.anticipation) {const a = smooth(t / T.anticipation); return mix(g, {twist: 0.35 * a * k, lean: 0.12 - 0.06 * a, rArm: L(0.7, 0.3, 2.2)});}
+    if (t < T.contact) {const e = 1 - Math.pow(1 - (t - T.anticipation) / (T.contact - T.anticipation), 3);
+      return mix(g, {twist: 0.35 * k - 0.7 * e * k, lean: 0.06 + 0.2 * e, y: -0.07, rArm: L(0.7 + 0.8 * e, 0.3 - 0.2 * e, 2.2 - 2.15 * e)});}
+    if (t < T.followThrough) return mix(g, {twist: -0.38 * k, lean: 0.27, y: -0.08, rArm: L(1.52, 0.1, 0.05)});
+    const r = smooth((t - T.followThrough) / (T.recover - T.followThrough));
+    return blendPose(mix(g, {twist: -0.38 * k, lean: 0.27, rArm: L(1.52, 0.1, 0.05)}), g, r);
+  },
+  kick: (t, c) => {
+    const T = ACTION_TIMING.kick, g = ACTION_FNS.guard(t, c);
+    if (t < T.anticipation) {const a = smooth(t / T.anticipation); return mix(g, {lean: -0.08 * a, rLeg: L(1.25 * a, 0.08, 1.9 * a), lLeg: L(0.1, 0.08, 0.2)});}
+    if (t < T.contact) {const e = 1 - Math.pow(1 - (t - T.anticipation) / (T.contact - T.anticipation), 3);
+      return mix(g, {lean: -0.08 - 0.22 * e, twist: 0.1 * e, rLeg: L(1.25 + 0.3 * e, 0.08, 1.9 - 1.85 * e), lLeg: L(0.1, 0.08, 0.25), lArm: L(0.5, 0.6, 1.2), rArm: L(-0.3, 0.5, 0.6)});}
+    if (t < T.followThrough) return mix(g, {lean: -0.3, rLeg: L(1.55, 0.08, 0.05), lLeg: L(0.1, 0.08, 0.25), lArm: L(0.5, 0.6, 1.2), rArm: L(-0.3, 0.5, 0.6)});
+    const r = smooth((t - T.followThrough) / (T.recover - T.followThrough));
+    return blendPose(mix(g, {lean: -0.3, rLeg: L(1.2, 0.08, 1.4)}), g, r);
+  },
+  block: (t, c) => {
+    const T = ACTION_TIMING.block, up = smooth(t / T.anticipation);
+    const hitK = t > T.contact ? Math.exp(-(t - T.contact) * 9) : 0; // recoil absorbs the incoming hit
+    return mix(ACTION_FNS.guard(t, c), {lean: 0.08 - 0.25 * hitK * c.intensity, y: -0.07 - 0.04 * hitK, headPitch: 0.15 * up,
+      lArm: L(1.1 * up + 0.4 * (1 - up), 0.05, 2.3 * up), rArm: L(1.15 * up + 0.4 * (1 - up), 0.05, 2.25 * up), lLeg: L(0.25, 0.1, 0.3), rLeg: L(-0.35 - 0.1 * hitK, 0.1, 0.2)});
+  },
+  dodge: (t, c) => {
+    const T = ACTION_TIMING.dodge;
+    const a = t < T.anticipation ? smooth(t / T.anticipation) * 0.25 : t < T.followThrough ? 0.25 + 0.75 * smooth((t - T.anticipation) / (T.contact - T.anticipation)) : 1 - smooth((t - T.followThrough) / (T.recover - T.followThrough));
+    return mix(ACTION_FNS.guard(t, c), {y: -0.3 * a, lean: 0.35 * a, side: 0.38 * a * c.intensity, twist: 0.25 * a, headPitch: -0.1 * a,
+      lLeg: L(0.55 * a + 0.2, 0.25 * a + 0.1, 1.0 * a + 0.2), rLeg: L(-0.35, 0.12, 0.6 * a + 0.1)});
+  },
+  grab: (t, c) => {
+    const T = ACTION_TIMING.grab, a = smooth(t / T.contact), close = t > T.contact ? 1 : 0;
+    return mix(REST, {lean: 0.22 * a - (t > T.followThrough ? 0.18 : 0), y: -0.05 * a, lArm: L(1.25 * a, 0.12, 0.5 + 0.6 * close), rArm: L(1.25 * a, 0.12, 0.5 + 0.6 * close),
+      lLeg: L(0.25 * a, 0.08, 0.25), rLeg: L(-0.25 * a, 0.08, 0.1), lHand: close ? 'fist' : 'open', rHand: close ? 'fist' : 'open'});
+  },
+  throw: (t, c) => {
+    const T = ACTION_TIMING.throw;
+    if (t < T.anticipation) {const a = smooth(t / T.anticipation); return mix(REST, {twist: 0.6 * a, lean: -0.22 * a, y: -0.08 * a, lArm: L(1.2 + 0.6 * a, 0.2, 0.5), rArm: L(1.2 + 0.6 * a, 0.2, 0.5), lLeg: L(0.3, 0.1, 0.3), rLeg: L(-0.35, 0.1, 0.25), lHand: 'fist', rHand: 'fist'});}
+    if (t < T.contact) {const e = smooth((t - T.anticipation) / (T.contact - T.anticipation));
+      return mix(REST, {twist: 0.6 - 1.2 * e, lean: -0.22 + 0.6 * e, y: -0.08, lArm: L(1.8 - 0.5 * e, 0.2, 0.5 - 0.4 * e), rArm: L(1.8 - 0.5 * e, 0.2, 0.5 - 0.4 * e), lLeg: L(0.3, 0.1, 0.3), rLeg: L(-0.35, 0.1, 0.25), lHand: 'open', rHand: 'open'});}
+    const r = smooth((t - T.contact) / (T.recover - T.contact));
+    return blendPose(mix(REST, {twist: -0.6, lean: 0.38, lArm: L(1.3, 0.2, 0.1), rArm: L(1.3, 0.2, 0.1), lHand: 'open', rHand: 'open'}), ACTION_FNS.idle(t, c), r);
+  },
+  pull: (t, c) => {const tug = Math.max(0, Math.sin(t * TAU * 1.1)) * c.intensity, a = smooth(t / 0.3);
+    return mix(REST, {lean: -0.3 * a - 0.08 * tug, y: -0.1 * a, lArm: L(1.25, 0.1, 0.5 + 0.5 * tug), rArm: L(1.25, 0.1, 0.5 + 0.5 * tug), lLeg: L(0.45 * a, 0.1, 0.5 * a), rLeg: L(-0.2, 0.1, 0.2), lHand: 'fist', rHand: 'fist'});},
+  hit: (t, c) => {const k = c.intensity;
+    const snap = t < 0.08 ? smooth(t / 0.08) : Math.exp(-(t - 0.08) * 4.5);
+    return mix(ACTION_FNS.guard(t, c), {lean: -0.4 * snap * k, headPitch: -0.45 * snap * k, headRoll: 0.2 * snap, twist: 0.3 * snap * k, y: -0.04 * snap,
+      lArm: L(0.4, 0.5 + 0.5 * snap, 0.8), rArm: L(0.2, 0.6 + 0.6 * snap, 0.7), lHand: 'open', rHand: 'open'});},
+  stagger: (t, c) => {const w = Math.sin(t * TAU * 1.6) * Math.exp(-t * 1.6);
+    return mix(REST, {side: 0.18 * w, lean: -0.15 * Math.exp(-t * 2), headRoll: 0.2 * w, lArm: L(0.4, 0.6 + 0.3 * w, 0.4), rArm: L(0.4, 0.6 - 0.3 * w, 0.4), lLeg: L(0.25 * w, 0.12, 0.2), rLeg: L(-0.25 * w, 0.12, 0.2), lHand: 'open', rHand: 'open'});},
+  knockdown: (t, c) => {const a = smooth(t / 0.45);
+    const p = blendPose(mix(REST, {lean: -0.5, headPitch: -0.4, lArm: L(1.8, 0.9, 0.3), rArm: L(1.8, 0.9, 0.3), lHand: 'open', rHand: 'open'}), mix(REST, LYING), a);
+    return mix(p, {y: (p.y ?? 0) + (t > 0.45 && t < 0.62 ? 0.06 * Math.sin(((t - 0.45) / 0.17) * Math.PI) : 0)}); // small bounce on landing
+  },
+  thrown: (t, c) => {const u = Math.min(1, t / 0.7), arc = 4 * u * (1 - u) * 0.55 * c.intensity;
+    const p = blendPose(mix(REST, {lean: -0.3, lArm: L(2.2, 1.0, 0.3), rArm: L(2.2, 1.0, 0.3), lLeg: L(0.6, 0.3, 0.9), rLeg: L(0.2, 0.3, 0.4), lHand: 'open', rHand: 'open'}), mix(REST, LYING), smooth(u));
+    return mix(p, {y: p.y + arc});
+  },
+  handshake: (t, c) => {const a = smooth(t / 0.4), pump = t > ACTION_TIMING.handshake.contact ? Math.sin((t - ACTION_TIMING.handshake.contact) * TAU * 2.6) * Math.exp(-(t - ACTION_TIMING.handshake.contact) * 0.9) : 0;
+    return mix(ACTION_FNS.idle(t, c), {lean: 0.06 * a, headPitch: 0.06 * a, rArm: L(0.95 * a + 0.08 * pump, 0.08, 0.35 + 0.15 * pump), rHand: 'open'});},
+  highfive: (t, c) => {const T = ACTION_TIMING.highfive, a = smooth(t / T.contact), rec = t > T.contact ? Math.exp(-(t - T.contact) * 6) : 0;
+    return mix(ACTION_FNS.idle(t, c), {y: 0.06 * a, lean: -0.04 + 0.1 * rec, side: -0.05 * a, rArm: L(2.35 * a, 0.3, 0.25 + 0.4 * rec), rHand: 'open', headPitch: -0.12 * a});},
+  give: (t, c) => {const a = smooth(t / 0.45); return mix(ACTION_FNS.idle(t, c), {lean: 0.1 * a, rArm: L(1.1 * a + 0.3, 0.1, 0.4), rHand: 'fist'});},
+  receive: (t, c) => {const a = smooth(t / 0.45); return mix(ACTION_FNS.idle(t, c), {lean: 0.08 * a, lArm: L(0.95 * a, 0.1, 0.5), rArm: L(1.05 * a, 0.1, 0.45), lHand: 'open', rHand: 'open'});},
+  rescue: (t, c) => {const T = ACTION_TIMING.rescue, reach = smooth(t / T.contact), lift = smooth((t - T.contact) / (T.followThrough - T.contact));
+    return mix(REST, {lean: 0.7 * reach - 0.55 * lift, y: -0.2 * reach + 0.18 * lift, headPitch: 0.3 * reach - 0.3 * lift,
+      rArm: L(1.0 + 0.4 * reach - 0.3 * lift, 0.12, 0.1 + 0.7 * lift), lArm: L(0.5 * reach, 0.3, 0.6), lLeg: L(0.6 * reach, 0.1, 0.9 * reach - 0.6 * lift + 0.1), rLeg: L(-0.25, 0.1, 0.3 * reach), rHand: 'open'});},
+  rescued: (t, c) => {const T = ACTION_TIMING.rescue, up = smooth((t - T.contact) / (T.followThrough - T.contact + 0.2));
+    const kneel = mix(REST, {y: -0.42, lean: 0.15, headPitch: -0.3, lLeg: L(1.4, 0.15, 2.4), rLeg: L(0.4, 0.15, 1.6), lArm: L(0.2, 0.3, 0.4), rArm: L(1.9, 0.15, 0.15), rHand: 'open'});
+    return blendPose(kneel, mix(ACTION_FNS.idle(t, c), {rArm: L(0.9, 0.12, 0.3)}), up);},
+  huddle: (t, c) => {const b = Math.abs(Math.sin(t * TAU * 1.2)) * c.intensity;
+    return mix(REST, {lean: 0.32, y: 0.03 * b, headPitch: 0.15, lArm: L(1.0, 0.9, 0.7), rArm: L(1.0, 0.9, 0.7), lHand: 'open', rHand: 'open', lLeg: L(0.1, 0.12, 0.1 + 0.2 * b), rLeg: L(0.1, 0.12, 0.1 + 0.2 * b)});},
   laugh: (t, c) => {const b = Math.sin(t * TAU * 3.2);
     return mix(ACTION_FNS.idle(t, c), {headPitch: -0.22 + 0.06 * b, lean: -0.08 + 0.03 * b, y: 0.01 * b, lArm: L(0.6, 0.2, 1.7), rArm: L(0.6, 0.2, 1.7), lHand: 'fist', rHand: 'fist'});},
 };
@@ -269,7 +364,9 @@ export function evaluateCharacter(ch: SceneCharacter, t: number, sceneDuration: 
       let pose = cur.pose;
       const local = t - cue.start;
       if (prevPose && local < BLEND) pose = blendPose(prevPose, pose, smooth(local / BLEND));
-      const reachW = cue.reach ? smooth(local / 0.35) : 0;
+      const rAt = cue.reachAt ?? 0, rRamp = cue.reachRamp ?? 0.35;
+      let reachW = cue.reach ? smooth((local - rAt) / rRamp) : 0;
+      if (cue.reach && cue.reachUntil !== undefined) reachW *= 1 - smooth((local - cue.reachUntil) / 0.25);
       const expr = cue.expression ?? prevExpr;
       const exprK = expr === prevExpr ? 1 : smooth(local / 0.3);
       // body language: blend out the old feeling, blend in the new one

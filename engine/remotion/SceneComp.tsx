@@ -21,7 +21,7 @@ export const SceneComp: React.FC<{scene: Scene; spec: VideoSpec; cast: Record<st
   const {fps} = useVideoConfig();
   return (
     <AbsoluteFill style={{backgroundColor: '#000'}}>
-      <Grade look={scene.look}><StageCanvas scene={scene} cast={cast} lineWidth={spec.style.lineWidth} render={spec.format.render} /></Grade>
+      <Grade look={scene.look}><StageCanvas scene={scene} cast={cast} lineWidth={spec.style.lineWidth} characterMode={spec.style.characterMode} render={spec.format.render} /></Grade>
       <SceneOverlays scene={scene} style={spec.style} captions={spec.captions} />
       {scene.narration?.audio && (
         <Sequence from={Math.round(scene.narration.start * fps)} layout="none"><Audio src={staticFile(scene.narration.audio)} /></Sequence>

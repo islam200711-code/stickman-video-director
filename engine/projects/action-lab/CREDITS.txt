@@ -1,0 +1,11 @@
+Action lab
+
+Audio credits:
+- Impact Punch Heavy 000 (kenney-impact-impact-punch-heavy-000) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Swish 1 (artisticdude-swishes-swish-1) — Swishes Sound Pack — artisticdude (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Footstep Wood 000 (kenney-impact-footstep-wood-000) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Impact Bell Heavy 000 (kenney-impact-impact-bell-heavy-000) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Impact Wood Heavy 000 (kenney-impact-impact-wood-heavy-000) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Belt Handle1 (kenney-rpg-belt-handle1) — RPG Audio — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- applause clapping church crowd immersive (expl0it3r-applause-applause-clapping-church-crowd-immersive) — Applause in a large hall or church - eXpl0it3r (https://opengameart.org/content/applause-in-a-large-hall-or-church), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged. — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Book Close (kenney-rpg-book-close) — RPG Audio — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.

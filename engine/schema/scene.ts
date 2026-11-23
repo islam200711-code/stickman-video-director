@@ -15,6 +15,9 @@ export const ACTIONS = [
   'idle', 'walk', 'run', 'jump', 'fall', 'sit', 'stand', 'talk', 'point', 'think',
   'surprised', 'celebrate', 'argue', 'fight', 'escape', 'work', 'computer', 'hold',
   'wave', 'shrug', 'facepalm', 'thumbsup', 'lying', 'push', 'reach', 'clap', 'nod', 'headshake', 'crouch', 'laugh',
+  // choreography (action director)
+  'guard', 'punch', 'kick', 'block', 'dodge', 'grab', 'throw', 'pull', 'hit', 'stagger', 'knockdown', 'thrown',
+  'handshake', 'highfive', 'give', 'receive', 'rescue', 'rescued', 'huddle',
 ] as const;
 export const Action = z.enum(ACTIONS);
 export type Action = z.infer<typeof Action>;
@@ -37,6 +40,9 @@ export const ActionCue = z.object({
   lookAtCharacter: z.string().optional(), // head/eyes track another character
   moveCurve: z.enum(['smooth', 'heavy', 'light']).optional(), // travel curve; match a pushed prop's weight so hands stay on it
   reach: z.object({left: Vec3.optional(), right: Vec3.optional()}).optional(), // IK hand targets (world space)
+  reachRamp: z.number().optional(),    // seconds to blend IK in (default 0.35; strikes use ~0.06)
+  reachAt: z.number().optional(),      // cue-local second when IK starts (default 0)
+  reachUntil: z.number().optional(),   // cue-local second when IK releases
   prop: z.string().optional(),         // prop held in right hand
 });
 export type ActionCue = z.infer<typeof ActionCue>;
@@ -120,7 +126,10 @@ export const Scene = z.object({
   narration: Narration.optional(),
   sfx: z.array(SfxCue).default([]),
   transitionIn: Transition.default({type: 'cut', duration: 0}),
+  /** event-driven visual effects (rendered by vfx/), times in scene seconds */
+  vfx: z.array(z.object({type: z.string(), at: z.number(), position: Vec3.optional(), dir: Vec3.optional(), scale: z.number().default(1), color: z.string().optional(), duration: z.number().optional(), actor: z.string().optional()})).default([]),
   look: z.string().default('natural'),  // lighting + depth + grade preset (three/looks.ts)
+  characterMode: z.enum(['stylized_3d', 'flat_2d', 'hybrid_2_5d']).optional(), // per-scene override of style.characterMode
 });
 export type Scene = z.infer<typeof Scene>;
 
@@ -145,6 +154,7 @@ export const Format = z.object({
 
 export const Style = z.object({
   lineWidth: z.number().default(1),     // limb thickness multiplier
+  characterMode: z.enum(['stylized_3d', 'flat_2d', 'hybrid_2_5d']).default('stylized_3d'), // stylized_3d = Style C (default)
   outline: z.boolean().default(true),
   font: z.string().default('Inter, Helvetica, Arial, sans-serif'),
   captionColor: z.string().default('#ffffff'),

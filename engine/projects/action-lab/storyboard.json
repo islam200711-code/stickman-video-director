@@ -1,0 +1,338 @@
+{
+ "id": "action-lab",
+ "title": "Action lab",
+ "brief": {
+  "category": "engine-test",
+  "topic": "action director test",
+  "fps": 24
+ },
+ "cast": [
+  "sam",
+  "riley",
+  "max",
+  "dev",
+  "jo"
+ ],
+ "voice": {
+  "provider": "none"
+ },
+ "captions": false,
+ "style": {
+  "characterMode": "flat_2d"
+ },
+ "shots": [
+  {
+   "id": "A-punch-hit-block-dodge",
+   "environment": "studio",
+   "duration": 7,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.8,
+      0,
+      0
+     ],
+     "facing": 90
+    },
+    "riley": {
+     "at": [
+      0.8,
+      0,
+      0
+     ],
+     "facing": -90
+    }
+   },
+   "actions": [
+    {
+     "type": "punch",
+     "at": 0.8,
+     "actor": "sam",
+     "target": "riley",
+     "outcome": "hit"
+    },
+    {
+     "type": "punch",
+     "at": 2.6,
+     "actor": "riley",
+     "target": "sam",
+     "outcome": "blocked"
+    },
+    {
+     "type": "punch",
+     "at": 4.4,
+     "actor": "sam",
+     "target": "riley",
+     "outcome": "dodged"
+    }
+   ],
+   "text": [
+    {
+     "text": "A-punch-hit-block-dodge",
+     "at": 0,
+     "until": 99,
+     "style": "lower-third"
+    }
+   ]
+  },
+  {
+   "id": "B-kick-knockdown",
+   "environment": "studio",
+   "duration": 4,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "blocking": {
+    "max": {
+     "at": [
+      -1.0,
+      0,
+      0
+     ],
+     "facing": 90
+    },
+    "dev": {
+     "at": [
+      0.9,
+      0,
+      0
+     ],
+     "facing": -90
+    }
+   },
+   "actions": [
+    {
+     "type": "kick",
+     "at": 0.8,
+     "actor": "max",
+     "target": "dev",
+     "force": 1.6,
+     "aim": "body"
+    }
+   ],
+   "text": [
+    {
+     "text": "B-kick-knockdown",
+     "at": 0,
+     "until": 99,
+     "style": "lower-third"
+    }
+   ]
+  },
+  {
+   "id": "C-grab-throw",
+   "environment": "studio",
+   "duration": 4.5,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "blocking": {
+    "riley": {
+     "at": [
+      -0.7,
+      0,
+      0
+     ],
+     "facing": 90
+    },
+    "max": {
+     "at": [
+      0.7,
+      0,
+      0
+     ],
+     "facing": -90
+    }
+   },
+   "actions": [
+    {
+     "type": "throw",
+     "at": 0.6,
+     "actor": "riley",
+     "target": "max",
+     "force": 1.0
+    }
+   ],
+   "text": [
+    {
+     "text": "C-grab-throw",
+     "at": 0,
+     "until": 99,
+     "style": "lower-third"
+    }
+   ]
+  },
+  {
+   "id": "D-push-pull",
+   "environment": "studio",
+   "duration": 5,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.75,
+      0,
+      0
+     ],
+     "facing": 90
+    },
+    "jo": {
+     "at": [
+      0.75,
+      0,
+      0
+     ],
+     "facing": -90
+    }
+   },
+   "actions": [
+    {
+     "type": "push",
+     "at": 0.6,
+     "actor": "sam",
+     "target": "jo"
+    },
+    {
+     "type": "pull",
+     "at": 2.6,
+     "actor": "jo",
+     "target": "sam"
+    }
+   ],
+   "text": [
+    {
+     "text": "D-push-pull",
+     "at": 0,
+     "until": 99,
+     "style": "lower-third"
+    }
+   ]
+  },
+  {
+   "id": "E-handshake-highfive-transfer",
+   "environment": "studio",
+   "duration": 7,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.95,
+      0,
+      0
+     ],
+     "facing": 90
+    },
+    "riley": {
+     "at": [
+      0.95,
+      0,
+      0
+     ],
+     "facing": -90
+    }
+   },
+   "actions": [
+    {
+     "type": "handshake",
+     "at": 0.5,
+     "actor": "sam",
+     "target": "riley"
+    },
+    {
+     "type": "highfive",
+     "at": 2.6,
+     "actor": "riley",
+     "target": "sam"
+    },
+    {
+     "type": "transfer",
+     "at": 4.2,
+     "actor": "sam",
+     "target": "riley",
+     "object": "coffee"
+    }
+   ],
+   "text": [
+    {
+     "text": "E-handshake-highfive-transfer",
+     "at": 0,
+     "until": 99,
+     "style": "lower-third"
+    }
+   ]
+  },
+  {
+   "id": "F-rescue-huddle",
+   "environment": "studio",
+   "duration": 6,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "blocking": {
+    "jo": {
+     "at": [
+      -0.8,
+      0,
+      0
+     ],
+     "facing": 90
+    },
+    "dev": {
+     "at": [
+      0.6,
+      0,
+      0
+     ],
+     "facing": -90
+    },
+    "sam": {
+     "at": [
+      2.4,
+      0,
+      0
+     ],
+     "facing": -90
+    }
+   },
+   "actions": [
+    {
+     "type": "rescue",
+     "at": 0.4,
+     "actor": "jo",
+     "target": "dev"
+    },
+    {
+     "type": "huddle",
+     "at": 3.6,
+     "actor": "jo",
+     "group": [
+      "jo",
+      "dev",
+      "sam"
+     ]
+    }
+   ],
+   "text": [
+    {
+     "text": "F-rescue-huddle",
+     "at": 0,
+     "until": 99,
+     "style": "lower-third"
+    }
+   ]
+  }
+ ]
+}
