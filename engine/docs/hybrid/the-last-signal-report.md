@@ -69,4 +69,4 @@ Library copy: original MP3 unchanged. In a finished video, disclose actual edits
 
 ## Render performance
 - Output: 1280×720 @ 24 fps, 1440 frames (60.00 s).
-- Wall time: 1250 s → **0.87 s/frame**, 20.8× realtime (4-core cloud container, software WebGL/SwiftShader, MSAA on, shadow map 1024, concurrency 3).
+- Wall time: 1248 s → **0.87 s/frame**, 20.8× realtime (4-core cloud container, software WebGL/SwiftShader, MSAA on, shadow map 1024, concurrency 3).
