@@ -1,111 +1,192 @@
 /**
- * Procedural, joint-based stickman rig for React Three Fiber.
- * Hierarchy: root(position, facing) -> hip(pose.y, tilt) -> torso(twist/lean/side)
- *   -> shoulders -> upperArm -> elbow -> forearm -> hand(+held prop)
- *   -> neck -> head(face, accessory)
- *   hip -> thigh -> knee -> shin -> foot
- * The rig has no internal state: it renders whatever CharacterFrame it receives.
+ * Style C — Stylized 3D Stickman renderer.
+ * Draws smooth, connected, tapered limbs through the solved skeleton (see
+ * skeleton.ts), rounded mitten hands with gesture shapes, soft shoes, and a
+ * large expressive head (sclera + pupils + highlights, brows, shaped mouths,
+ * blush). The component holds no state: geometry is a pure function of the frame.
  */
-import React, {useMemo} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import * as THREE from 'three';
-import {PROPORTIONS as P, type CharacterFrame, type Limb} from '../animations/library';
-import type {CharacterProfile, Expression} from '../schema/scene';
+import {PROPORTIONS as P, type CharacterFrame, type HandShape} from '../animations/library';
+import type {CharacterProfile, Expression, Vec3} from '../schema/scene';
 import {BUILD_THICKNESS} from '../characters';
 import {HandProp} from './props';
+import {solveSkeleton, type ArmJoints, type Skeleton} from './skeleton';
+import {ContactShadow} from './ContactShadow';
 
-const R = 0.045; // base limb radius
+const V3 = THREE.Vector3;
 
-type MatProps = {color: string};
-const Ink: React.FC<MatProps> = ({color}) => <meshStandardMaterial color={color} roughness={0.55} metalness={0} />;
+/* ---------- materials (cached per colour; smooth, controlled highlights) ---------- */
+const matCache = new Map<string, THREE.Material>();
+function bodyMat(color: string) {
+  const k = `b${color}`;
+  if (!matCache.has(k)) matCache.set(k, new THREE.MeshStandardMaterial({color, roughness: 0.42, metalness: 0, envMapIntensity: 0.6}));
+  return matCache.get(k)!;
+}
+function flatMat(color: string, opacity = 1) {
+  const k = `f${color}${opacity}`;
+  if (!matCache.has(k)) matCache.set(k, new THREE.MeshBasicMaterial({color, transparent: opacity < 1, opacity, depthWrite: opacity >= 1}));
+  return matCache.get(k)!;
+}
+function skinMat(color: string) {
+  const k = `h${color}`;
+  if (!matCache.has(k)) matCache.set(k, new THREE.MeshStandardMaterial({color, roughness: 0.55, metalness: 0, emissive: new THREE.Color(color), emissiveIntensity: 0.12}));
+  return matCache.get(k)!;
+}
+const darker = (c: string, f = 0.55) => '#' + new THREE.Color(c).multiplyScalar(f).getHexString();
 
-const Bone: React.FC<{len: number; r: number; color: string}> = ({len, r, color}) => (
-  <mesh position={[0, -len / 2, 0]} castShadow>
-    <capsuleGeometry args={[r, len, 6, 12]} />
-    <Ink color={color} />
-  </mesh>
-);
+/* ---------- smooth tapered tube through joints ---------- */
+function taperTube(points: THREE.Vector3[], radii: number[], segs = 22, radial = 12): THREE.BufferGeometry {
+  const curve = new THREE.CatmullRomCurve3(points, false, 'centripetal', 0.5);
+  const geo = new THREE.TubeGeometry(curve, segs, 1, radial, false);
+  const pos = geo.attributes.position as THREE.BufferAttribute;
+  const c = new V3(), v = new V3();
+  for (let i = 0; i <= segs; i++) {
+    const u = i / segs;
+    curve.getPointAt(u, c);
+    const f = u * (radii.length - 1), i0 = Math.floor(f), i1 = Math.min(radii.length - 1, i0 + 1);
+    const r = THREE.MathUtils.lerp(radii[i0], radii[i1], f - i0);
+    for (let j = 0; j <= radial; j++) {
+      const idx = i * (radial + 1) + j;
+      v.fromBufferAttribute(pos, idx).sub(c).multiplyScalar(r).add(c);
+      pos.setXYZ(idx, v.x, v.y, v.z);
+    }
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
 
-const LimbChain: React.FC<{
-  limb: Limb; side: 1 | -1; upper: number; lower: number; r: number; color: string; leg?: boolean; children?: React.ReactNode;
-}> = ({limb, side, upper, lower, r, color, leg, children}) => (
-  <group rotation={[-limb.fwd, 0, side * limb.out]}>
-    <Bone len={upper} r={r} color={color} />
-    <mesh position={[0, -upper, 0]}><sphereGeometry args={[r * 1.02, 12, 10]} /><Ink color={color} /></mesh>
-    <group position={[0, -upper, 0]} rotation={[leg ? limb.bend : -limb.bend, 0, 0]}>
-      <Bone len={lower} r={r * 0.92} color={color} />
-      <group position={[0, -lower, 0]}>{children}</group>
-    </group>
-  </group>
-);
-
-const FACE: Record<Expression, {mouth: number; brow: number; eye: number; browY?: number}> = {
-  neutral: {mouth: 0.005, brow: 0, eye: 1},
-  happy: {mouth: 0.045, brow: 0.1, eye: 0.9},
-  sad: {mouth: -0.035, brow: -0.35, eye: 0.9},
-  angry: {mouth: -0.02, brow: 0.5, eye: 0.85},
-  surprised: {mouth: 0, brow: 0, eye: 1.35, browY: 0.03},
-  thinking: {mouth: -0.008, brow: -0.2, eye: 0.8},
-  worried: {mouth: -0.025, brow: -0.45, eye: 1.1},
-  determined: {mouth: 0.0, brow: 0.35, eye: 0.85},
+const Tube: React.FC<{points: THREE.Vector3[]; radii: number[]; material: THREE.Material}> = ({points, radii, material}) => {
+  const key = points.map((p) => `${p.x.toFixed(4)},${p.y.toFixed(4)},${p.z.toFixed(4)}`).join('|') + radii.join(',');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const geo = useMemo(() => taperTube(points, radii), [key]);
+  useEffect(() => () => geo.dispose(), [geo]);
+  return <mesh geometry={geo} material={material} castShadow receiveShadow />;
 };
+const Ball: React.FC<{at: THREE.Vector3; r: number; material: THREE.Material; scale?: Vec3}> = ({at, r, material, scale = [1, 1, 1]}) => (
+  <mesh position={at} scale={scale.map((s) => s * r) as Vec3} material={material} castShadow><sphereGeometry args={[1, 18, 14]} /></mesh>
+);
 
-const Mouth: React.FC<{curve: number; open: number; z: number}> = ({curve, open, z}) => {
-  const geo = useMemo(() => {
-    const c = new THREE.QuadraticBezierCurve3(new THREE.Vector3(-0.055, 0, 0), new THREE.Vector3(0, -curve * 2, 0.01), new THREE.Vector3(0.055, 0, 0));
-    return new THREE.TubeGeometry(c, 12, 0.009, 6, false);
-  }, [curve]);
+/* ---------- hands ---------- */
+function handQuat(a: ArmJoints) {
+  const y = a.handDir.clone().normalize();
+  const z = a.handUp.clone().sub(y.clone().multiplyScalar(a.handUp.dot(y))).normalize();
+  const x = new V3().crossVectors(y, z);
+  return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
+}
+const Hand: React.FC<{arm: ArmJoints; shape: HandShape; side: 1 | -1; mat: THREE.Material; r: number; prop?: string}> = ({arm, shape, side, mat, r, prop}) => {
+  const q = handQuat(arm);
+  const s = r / 0.042; // scale hands with build
+  const palm: Vec3 = shape === 'fist' || shape === 'point' || shape === 'thumb' ? [0.05, 0.052, 0.045] : [0.05, 0.068, 0.03];
   return (
-    <group position={[0, -0.065, z]}>
-      {open > 0.02 ? (
-        <mesh scale={[0.045, Math.max(0.01, open * 0.05), 0.02]}><sphereGeometry args={[1, 16, 10]} /><meshBasicMaterial color="#141414" /></mesh>
-      ) : (
-        <mesh geometry={geo}><meshBasicMaterial color="#141414" /></mesh>
+    <group position={arm.wrist} quaternion={q} scale={s}>
+      <mesh position={[0, 0.045, 0]} scale={palm} material={mat} castShadow><sphereGeometry args={[1, 16, 12]} /></mesh>
+      {(shape === 'open' || shape === 'relaxed') && (
+        <mesh position={[side * 0.042, 0.03, 0.012]} rotation={[0, 0, side * 0.7]} scale={[0.017, 0.035, 0.017]} material={mat}><sphereGeometry args={[1, 10, 8]} /></mesh>
       )}
+      {shape === 'point' && (
+        <mesh position={[0, 0.1, 0.015]} material={mat} castShadow><capsuleGeometry args={[0.014, 0.06, 4, 8]} /></mesh>
+      )}
+      {shape === 'thumb' && (
+        <mesh position={[0, 0.05, 0.055]} rotation={[Math.PI / 2, 0, 0]} material={mat} castShadow><capsuleGeometry args={[0.015, 0.045, 4, 8]} /></mesh>
+      )}
+      {prop && side === -1 && <group position={[0, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}><HandProp kind={prop} /></group>}
     </group>
   );
 };
 
-const Head: React.FC<{profile: CharacterProfile; expression: Expression; talkOpen: number; blink: number}> = ({profile, expression, talkOpen, blink}) => {
-  const hr = P.head;
+/* ---------- face ---------- */
+type FaceDef = {mouth: 'line' | 'smile' | 'grin' | 'frown' | 'o' | 'wavy' | 'smirk' | 'flat'; brow: number; browY: number; eyeH: number; pupil: [number, number]; blush: boolean; lid?: number};
+const FACE: Record<Expression, FaceDef> = {
+  neutral: {mouth: 'line', brow: 0, browY: 0, eyeH: 1, pupil: [0, 0], blush: false},
+  happy: {mouth: 'smile', brow: 0.12, browY: 0.008, eyeH: 0.9, pupil: [0, 0], blush: true},
+  excited: {mouth: 'grin', brow: 0.15, browY: 0.02, eyeH: 1.1, pupil: [0, 0.004], blush: true},
+  sad: {mouth: 'frown', brow: -0.38, browY: 0, eyeH: 0.85, pupil: [0, -0.01], blush: false},
+  angry: {mouth: 'flat', brow: 0.55, browY: -0.012, eyeH: 0.8, pupil: [0, 0], blush: false, lid: 0.3},
+  surprised: {mouth: 'o', brow: 0.0, browY: 0.03, eyeH: 1.25, pupil: [0, 0], blush: false},
+  scared: {mouth: 'wavy', brow: -0.45, browY: 0.025, eyeH: 1.3, pupil: [0, 0], blush: false},
+  thinking: {mouth: 'smirk', brow: -0.15, browY: 0.01, eyeH: 0.9, pupil: [0.012, 0.014], blush: false},
+  worried: {mouth: 'wavy', brow: -0.45, browY: 0.008, eyeH: 1.05, pupil: [0, -0.004], blush: false},
+  determined: {mouth: 'flat', brow: 0.35, browY: -0.006, eyeH: 0.85, pupil: [0, 0], blush: false, lid: 0.15},
+  confused: {mouth: 'smirk', brow: -0.3, browY: 0.012, eyeH: 1, pupil: [-0.01, 0.008], blush: false},
+  smug: {mouth: 'smirk', brow: 0.18, browY: 0, eyeH: 0.6, pupil: [0.006, 0], blush: false, lid: 0.45},
+};
+const INK = '#1a1a1f';
+
+function curveGeo(pts: [number, number][], z: number, r: number) {
+  const c = new THREE.CatmullRomCurve3(pts.map(([x, y]) => new V3(x, y, z)));
+  return new THREE.TubeGeometry(c, 16, r, 6, false);
+}
+const MOUTH_GEOS: Record<string, THREE.BufferGeometry> = {};
+function mouthGeo(kind: string) {
+  if (!MOUTH_GEOS[kind]) {
+    const z = 0;
+    const g = {
+      line: curveGeo([[-0.035, 0], [0, -0.004], [0.035, 0]], z, 0.0085),
+      smile: curveGeo([[-0.055, 0.012], [-0.025, -0.012], [0.025, -0.012], [0.055, 0.012]], z, 0.009),
+      frown: curveGeo([[-0.045, -0.012], [-0.02, 0.008], [0.02, 0.008], [0.045, -0.012]], z, 0.009),
+      wavy: curveGeo([[-0.045, -0.004], [-0.02, 0.006], [0, -0.004], [0.02, 0.006], [0.045, -0.004]], z, 0.008),
+      smirk: curveGeo([[-0.035, -0.004], [0.01, -0.006], [0.045, 0.012]], z, 0.0085),
+      flat: curveGeo([[-0.045, 0], [0.045, 0]], z, 0.0095),
+    } as Record<string, THREE.BufferGeometry>;
+    Object.assign(MOUTH_GEOS, g);
+  }
+  return MOUTH_GEOS[kind];
+}
+
+const Face: React.FC<{expression: Expression; talkOpen: number; blink: number; r: number; inkCol: string}> = ({expression, talkOpen, blink, r, inkCol}) => {
   const f = FACE[expression];
-  const z = hr * 0.93;
-  const eyeH = Math.max(0.08, f.eye * (1 - blink));
+  const zf = r * 0.92;
+  const lid = Math.max(blink, f.lid ?? 0);
+  const eyeY = Math.max(0.06, f.eyeH * (1 - lid));
+  const open = f.mouth === 'grin' ? 0.75 + talkOpen * 0.25 : f.mouth === 'o' ? 0.7 + talkOpen * 0.2 : talkOpen;
+  const ink = flatMat(INK);
   return (
-    <group position={[0, hr, 0]}>
-      <mesh castShadow><sphereGeometry args={[hr, 28, 20]} /><meshStandardMaterial color={profile.headColor ?? '#fdfdfb'} roughness={0.7} /></mesh>
-      {/* inverted-hull outline keeps the classic "drawn circle" read */}
-      <mesh scale={1.09}><sphereGeometry args={[hr, 28, 20]} /><meshBasicMaterial color={profile.color} side={THREE.BackSide} /></mesh>
-      {[-1, 1].map((s) => (
-        <group key={s}>
-          <mesh position={[s * 0.058, 0.025, z]} scale={[0.022, 0.03 * eyeH, 0.012]}><sphereGeometry args={[1, 12, 10]} /><meshBasicMaterial color="#141414" /></mesh>
-          <mesh position={[s * 0.06, 0.082 + (f.browY ?? 0), z - 0.01]} rotation={[0, 0, -s * f.brow]}>
-            <boxGeometry args={[0.055, 0.012, 0.01]} /><meshBasicMaterial color="#141414" />
-          </mesh>
+    <group>
+      {([-1, 1] as const).map((s) => (
+        <group key={s} position={[s * r * 0.36, r * 0.12, zf * 0.96]} rotation={[-0.08, s * 0.34, 0]}>
+          <mesh scale={[r * 0.27, r * 0.34 * eyeY, r * 0.1]} material={flatMat('#ffffff')}><sphereGeometry args={[1, 18, 14]} /></mesh>
+          <mesh position={[f.pupil[0] - s * 0.004, f.pupil[1] - 0.004, r * 0.08]} scale={[r * 0.145, r * 0.18 * eyeY, r * 0.05]} material={ink}><sphereGeometry args={[1, 14, 10]} /></mesh>
+          {eyeY > 0.3 && <mesh position={[f.pupil[0] + 0.008, f.pupil[1] + 0.012 * eyeY, r * 0.12]} scale={r * 0.04} material={flatMat('#ffffff')}><sphereGeometry args={[1, 8, 6]} /></mesh>}
+          <mesh position={[0, r * (0.47 + f.browY * 5), r * 0.06]} rotation={[0, 0, Math.PI / 2 + s * f.brow]} material={flatMat(inkCol)}><capsuleGeometry args={[r * 0.048, r * 0.26, 4, 8]} /></mesh>
         </group>
       ))}
-      <Mouth curve={f.mouth} open={expression === 'surprised' ? 0.6 + talkOpen * 0.3 : talkOpen} z={z - 0.005} />
-      <Accessory profile={profile} />
+      <group position={[0, -r * 0.33, zf]} rotation={[-0.25, 0, 0]}>
+        {open > 0.05 ? (
+          <group>
+            <mesh scale={[r * 0.24, r * 0.2 * open, r * 0.08]} material={flatMat('#5b1f26')}><sphereGeometry args={[1, 16, 12]} /></mesh>
+            {open > 0.4 && <mesh position={[0, -r * 0.08 * open, r * 0.04]} scale={[r * 0.13, r * 0.07 * open, r * 0.05]} material={flatMat('#e06a78')}><sphereGeometry args={[1, 10, 8]} /></mesh>}
+          </group>
+        ) : (
+          <mesh geometry={mouthGeo(f.mouth === 'grin' ? 'smile' : f.mouth === 'o' ? 'line' : f.mouth)} material={ink} scale={(r / 0.2) * 1.25} />
+        )}
+      </group>
+      {f.blush && ([-1, 1] as const).map((s) => (
+        <mesh key={s} position={[s * r * 0.58, -r * 0.14, zf * 0.78]} rotation={[0, s * 0.6, 0]} scale={[r * 0.15, r * 0.08, r * 0.02]} material={flatMat('#ff7a8a', 0.45)}><sphereGeometry args={[1, 10, 8]} /></mesh>
+      ))}
     </group>
   );
 };
 
-const Accessory: React.FC<{profile: CharacterProfile}> = ({profile}) => {
+const Accessory: React.FC<{profile: CharacterProfile; r: number}> = ({profile, r}) => {
   const c = profile.accent ?? '#e33';
-  const hr = P.head;
+  const m = bodyMat(c);
   switch (profile.accessory) {
     case 'cap':
-      return (<group position={[0, hr * 0.35, 0]}>
-        <mesh><sphereGeometry args={[hr * 1.04, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color={c} /></mesh>
-        <mesh position={[0, 0.005, hr * 0.85]} rotation={[0.15, 0, 0]}><boxGeometry args={[hr * 1.3, 0.015, hr * 0.8]} /><meshStandardMaterial color={c} /></mesh>
+      return (<group position={[0, r * 0.32, 0]} rotation={[-0.12, 0, 0]}>
+        <mesh material={m} castShadow><sphereGeometry args={[r * 1.04, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2]} /></mesh>
+        <mesh position={[0, 0.0, r * 0.92]} rotation={[0.22, 0, 0]} scale={[1, 0.25, 1]} material={m} castShadow><cylinderGeometry args={[r * 0.62, r * 0.62, 0.05, 24, 1, false, -Math.PI / 2, Math.PI]} /></mesh>
+        <mesh position={[0, r * 1.02, 0]} material={m}><sphereGeometry args={[r * 0.1, 10, 8]} /></mesh>
       </group>);
     case 'bow':
-      return (<group position={[hr * 0.6, hr * 0.75, 0]} rotation={[0, 0, 0.4]}>
-        {[-1, 1].map((s) => <mesh key={s} position={[s * 0.05, 0, 0]} rotation={[0, 0, s * Math.PI / 2]}><coneGeometry args={[0.04, 0.09, 12]} /><meshStandardMaterial color={c} /></mesh>)}
+      return (<group position={[r * 0.55, r * 0.8, 0]} rotation={[0, 0, 0.5]}>
+        {[-1, 1].map((s) => <mesh key={s} position={[s * 0.055, 0, 0]} rotation={[0, 0, s * Math.PI / 2]} material={m}><coneGeometry args={[0.05, 0.1, 14]} /></mesh>)}
+        <mesh material={m}><sphereGeometry args={[0.025, 10, 8]} /></mesh>
       </group>);
     case 'glasses':
-      return (<group position={[0, 0.025, hr * 0.97]}>
-        {[-1, 1].map((s) => <mesh key={s} position={[s * 0.06, 0, 0]}><torusGeometry args={[0.038, 0.007, 8, 20]} /><meshBasicMaterial color={c} /></mesh>)}
-        <mesh><boxGeometry args={[0.04, 0.007, 0.007]} /><meshBasicMaterial color={c} /></mesh>
+      return (<group position={[0, r * 0.12, r * 0.98]}>
+        {[-1, 1].map((s) => <mesh key={s} position={[s * r * 0.36, 0, 0]} material={flatMat(c)}><torusGeometry args={[r * 0.26, 0.008, 8, 24]} /></mesh>)}
+        <mesh material={flatMat(c)}><boxGeometry args={[r * 0.22, 0.008, 0.008]} /></mesh>
       </group>);
     default:
       return null;
@@ -114,62 +195,65 @@ const Accessory: React.FC<{profile: CharacterProfile}> = ({profile}) => {
 
 export const Stickman: React.FC<{profile: CharacterProfile; frame: CharacterFrame; time: number; lineWidth?: number}> = ({profile, frame, time, lineWidth = 1}) => {
   const {pose} = frame;
-  const r = R * BUILD_THICKNESS[profile.build] * lineWidth;
-  const color = profile.color;
-  const talkOpen = frame.talking ? Math.max(0, Math.sin(time * 17) * 0.5 + Math.sin(time * 11.3) * 0.5) : 0;
-  // deterministic blink every ~3.4s, offset per character
-  const seed = profile.id.length * 0.77;
-  const bp = (time + seed) % 3.4;
-  const blink = bp < 0.12 ? Math.sin((bp / 0.12) * Math.PI) : 0;
   const yaw = (frame.facing * Math.PI) / 180;
-  const shoulderY = P.torso - 0.04;
+  // world -> character-local for IK targets
+  const toLocal = (w?: Vec3) => {
+    if (!w) return undefined;
+    const v = new V3(w[0] - frame.position[0], w[1] - frame.position[1], w[2] - frame.position[2]).applyAxisAngle(new V3(0, 1, 0), -yaw);
+    return v.multiplyScalar(1 / profile.scale);
+  };
+  const sk: Skeleton = solveSkeleton(pose, {reachLocal: {left: toLocal(frame.reach?.left), right: toLocal(frame.reach?.right)}, reachWeight: frame.reach?.weight ?? 0});
+  const b = BUILD_THICKNESS[profile.build] * lineWidth;
+  const mat = bodyMat(profile.color);
+  const R = {torso: [0.072, 0.082, 0.07, 0.05].map((x) => x * b), arm: [0.05, 0.046, 0.04, 0.036].map((x) => x * b), leg: [0.06, 0.056, 0.048, 0.044].map((x) => x * b)};
+  const talkOpen = frame.talking ? Math.max(0, Math.sin(time * 16) * 0.5 + Math.sin(time * 10.7) * 0.5) : 0;
+  const seed = profile.id.length * 0.77 + profile.id.charCodeAt(0) * 0.13;
+  const bp = (time + seed) % 3.6;
+  const blink = bp < 0.13 ? Math.sin((bp / 0.13) * Math.PI) : 0;
+  const hr = P.head;
+  const footQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(pose.tilt, 0, 0));
+  const fwd = new V3(0, 0, 1).applyQuaternion(footQ);
+  const spineMid = sk.pelvis.clone().lerp(sk.neck, 0.5).add(new V3(0, 0, 0).applyQuaternion(sk.bodyQuat));
+  const headCol = profile.headColor ?? '#fbf6ee';
   return (
     <group position={frame.position} rotation={[0, yaw, 0]} scale={profile.scale}>
-      <group position={[0, P.hip + pose.y, 0]} rotation={[pose.tilt, 0, 0]}>
-        {/* torso */}
-        <group rotation={new THREE.Euler(pose.lean, pose.twist, pose.side, 'YXZ')}>
-          <mesh position={[0, P.torso / 2, 0]} castShadow><capsuleGeometry args={[r * 1.1, P.torso, 6, 12]} /><Ink color={color} /></mesh>
-          {profile.accessory === 'tie' && (
-            <mesh position={[0, shoulderY - 0.17, r * 1.1]} rotation={[0, 0, Math.PI]}><coneGeometry args={[0.04, 0.26, 4]} /><meshStandardMaterial color={profile.accent} /></mesh>
-          )}
-          {profile.accessory === 'scarf' && (
-            <group position={[0, P.torso + 0.02, 0]}>
-              <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.07, 0.03, 10, 20]} /><meshStandardMaterial color={profile.accent} /></mesh>
-              <mesh position={[0.05, -0.1, 0.06]} rotation={[0.2, 0, 0.15]}><boxGeometry args={[0.05, 0.18, 0.02]} /><meshStandardMaterial color={profile.accent} /></mesh>
-            </group>
-          )}
-          {/* shoulder bar */}
-          <mesh position={[0, shoulderY, 0]} rotation={[0, 0, Math.PI / 2]}><capsuleGeometry args={[r, P.shoulderWidth * 2, 4, 10]} /><Ink color={color} /></mesh>
-          {/* neck + head */}
-          <group position={[0, P.torso, 0]}>
-            <mesh position={[0, P.neck / 2, 0]}><cylinderGeometry args={[r * 0.9, r * 0.9, P.neck, 10]} /><Ink color={color} /></mesh>
-            <group position={[0, P.neck, 0]} rotation={new THREE.Euler(pose.headPitch, pose.headYaw, pose.headRoll, 'YXZ')}>
-              <Head profile={profile} expression={frame.expression} talkOpen={talkOpen} blink={blink} />
-            </group>
-          </group>
-          {/* arms: character's left is +x */}
-          <group position={[P.shoulderWidth, shoulderY, 0]}>
-            <LimbChain limb={pose.lArm} side={1} upper={P.upperArm} lower={P.forearm} r={r} color={color}>
-              <mesh><sphereGeometry args={[r * 1.35, 12, 10]} /><Ink color={color} /></mesh>
-            </LimbChain>
-          </group>
-          <group position={[-P.shoulderWidth, shoulderY, 0]}>
-            <LimbChain limb={pose.rArm} side={-1} upper={P.upperArm} lower={P.forearm} r={r} color={color}>
-              <mesh><sphereGeometry args={[r * 1.35, 12, 10]} /><Ink color={color} /></mesh>
-              {frame.prop && <HandProp kind={frame.prop} />}
-            </LimbChain>
-          </group>
+      <ContactShadow center={[sk.pelvis.x, sk.pelvis.z]} height={Math.max(0, sk.pelvis.y - P.hip)} lying={pose.tilt !== 0} />
+      {/* torso: one smooth tapered tube pelvis -> chest -> neck */}
+      <Tube points={[sk.pelvis.clone().add(new V3(0, -0.04, 0).applyQuaternion(sk.bodyQuat)), spineMid, sk.chest, sk.neck.clone().add(new V3(0, P.neck, 0).applyQuaternion(sk.bodyQuat))]} radii={R.torso} material={mat} />
+      <Ball at={sk.pelvis.clone().add(new V3(0, -0.035, 0).applyQuaternion(sk.bodyQuat))} r={R.torso[0] * 1.02} material={mat} />
+      {/* arms start inside the chest for a connected shoulder line */}
+      {([['l', sk.lArm, pose.lHand, 1], ['r', sk.rArm, pose.rHand, -1]] as const).map(([k, a, shape, side]) => (
+        <group key={k}>
+          <Tube points={[sk.chest.clone().lerp(a.shoulder, 0.35), a.shoulder, a.elbow, a.wrist]} radii={R.arm} material={mat} />
+          <Hand arm={a} shape={shape} side={side} mat={mat} r={R.arm[3]} prop={frame.prop} />
         </group>
-        {/* legs */}
-        {([1, -1] as const).map((s) => (
-          <group key={s} position={[s * P.hipWidth, 0, 0]}>
-            <LimbChain limb={s === 1 ? pose.lLeg : pose.rLeg} side={s} upper={P.thigh} lower={P.shin} r={r * 1.05} color={color} leg>
-              <group rotation={[(s === 1 ? pose.lLeg : pose.rLeg).fwd - (s === 1 ? pose.lLeg : pose.rLeg).bend, 0, 0]}>
-                <mesh position={[0, -0.01, 0.05]} rotation={[Math.PI / 2, 0, 0]} castShadow><capsuleGeometry args={[r * 1.1, 0.1, 4, 10]} /><Ink color={color} /></mesh>
-              </group>
-            </LimbChain>
-          </group>
-        ))}
+      ))}
+      {/* legs flow from the pelvis */}
+      {([['l', sk.lLeg], ['r', sk.rLeg]] as const).map(([k, l]) => (
+        <group key={k}>
+          <Tube points={[sk.pelvis.clone().lerp(l.hip, 0.4), l.hip, l.knee, l.ankle]} radii={R.leg} material={mat} />
+          <mesh position={l.ankle.clone().add(fwd.clone().multiplyScalar(0.045)).add(new V3(0, -0.012, 0))} quaternion={footQ} scale={[0.068 * b, 0.05 * b, 0.12]} material={bodyMat(darker(profile.color, 0.7))} castShadow><sphereGeometry args={[1, 18, 12]} /></mesh>
+        </group>
+      ))}
+      {/* body accessories */}
+      {profile.accessory === 'scarf' && (
+        <group position={sk.neck} quaternion={sk.bodyQuat}>
+          <mesh position={[0, 0.02, 0]} rotation={[Math.PI / 2, 0, 0]} material={bodyMat(profile.accent ?? '#e33')} castShadow><torusGeometry args={[0.068, 0.034, 12, 24]} /></mesh>
+          <mesh position={[0.05, -0.09, 0.07]} rotation={[0.25, 0, 0.12]} material={bodyMat(profile.accent ?? '#e33')} castShadow><capsuleGeometry args={[0.026, 0.13, 4, 8]} /></mesh>
+        </group>
+      )}
+      {profile.accessory === 'tie' && (
+        <group position={sk.chest} quaternion={sk.bodyQuat}>
+          <mesh position={[0, -0.14, 0.072 * b]} rotation={[0.08, 0, Math.PI]} scale={[1, 1, 0.35]} material={bodyMat(profile.accent ?? '#e33')}><coneGeometry args={[0.045, 0.24, 4]} /></mesh>
+          <mesh position={[0, 0.02, 0.07 * b]} material={bodyMat(profile.accent ?? '#e33')}><sphereGeometry args={[0.025, 8, 6]} /></mesh>
+        </group>
+      )}
+      {/* head */}
+      <group position={sk.headCenter} quaternion={sk.headQuat}>
+        <mesh scale={[1, 1.04, 0.97]} material={skinMat(headCol)} castShadow><sphereGeometry args={[hr, 36, 26]} /></mesh>
+        <mesh scale={[1.045, 1.085, 1.015]} material={(() => {const k = `o${profile.color}`; if (!matCache.has(k)) matCache.set(k, new THREE.MeshBasicMaterial({color: darker(profile.color, 0.6), side: THREE.BackSide})); return matCache.get(k)!;})()}><sphereGeometry args={[hr, 36, 26]} /></mesh>
+        <Face expression={frame.expression} talkOpen={talkOpen} blink={blink} r={hr} inkCol={darker(profile.color, 0.45)} />
+        <Accessory profile={profile} r={hr} />
       </group>
     </group>
   );

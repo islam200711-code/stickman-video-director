@@ -20,9 +20,11 @@ export type Assets = {
 };
 export type AdaptResult = {spec: VideoSpec; warnings: string[]};
 
-const SHOT_DIST = {establishing: 12, wide: 8, 'two-shot': 5.6, medium: 4.4, close: 2.5, low: 5.8, high: 7} as const;
-const LOOK_Y = {establishing: 1.2, wide: 1.1, 'two-shot': 1.2, medium: 1.3, close: 1.62, low: 1.5, high: 0.8} as const;
-const CAM_Y = {establishing: 2.4, wide: 1.8, 'two-shot': 1.5, medium: 1.5, close: 1.68, low: 0.45, high: 6} as const;
+// Style C lens rules: wider lens for space, longer lens (compression) for faces.
+const SHOT_DIST = {establishing: 14, wide: 8.5, 'two-shot': 5.4, medium: 4.2, close: 2.6, 'extreme-close': 1.5, low: 5.8, high: 7, 'over-shoulder': 2.2} as const;
+const LOOK_Y = {establishing: 1.3, wide: 1.1, 'two-shot': 1.25, medium: 1.35, close: 1.68, 'extreme-close': 1.74, low: 1.5, high: 0.8, 'over-shoulder': 1.6} as const;
+const CAM_Y = {establishing: 3.0, wide: 1.8, 'two-shot': 1.55, medium: 1.55, close: 1.72, 'extreme-close': 1.76, low: 0.45, high: 6, 'over-shoulder': 1.75} as const;
+const FOV = {establishing: 42, wide: 40, 'two-shot': 36, medium: 34, close: 28, 'extreme-close': 24, low: 40, high: 40, 'over-shoulder': 32} as const;
 
 function round(x: number, d = 3) {const k = 10 ** d; return Math.round(x * k) / k;}
 
@@ -40,7 +42,7 @@ function buildCharacters(shot: Shot, scale: number, warnings: string[]): SceneCh
     const beats = shot.beats.filter((b) => b.who === id).sort((a, b) => a.at - b.at);
     const track: ActionCue[] = beats.map((b) => ({
       action: b.do, start: round(b.at * scale), end: b.until !== undefined ? round(b.until * scale) : undefined,
-      speed: b.speed ?? 1, intensity: b.intensity ?? 1, expression: b.expression, facing: b.facing, to: b.to, prop: b.prop,
+      speed: b.speed ?? 1, intensity: b.intensity ?? 1, expression: b.expression, facing: b.facing, to: b.to, prop: b.prop, reach: b.reach, target: b.lookAt,
     }));
     if (!track.length || track[0].start > 0) track.unshift({action: 'idle', start: 0, speed: 1, intensity: 1});
     return {id, label: block.label, position: block.at, facing: block.facing, expression: block.expression, track};
@@ -58,13 +60,28 @@ function focusPoint(shot: Shot, chars: SceneCharacter[], t: number, dur: number)
 
 function buildCamera(shot: Shot, chars: SceneCharacter[], dur: number): Scene['camera'] {
   const {shot: type, move, angle, shake} = shot.camera;
-  const yaw0 = (angle * Math.PI) / 180;
+  let yaw0 = (angle * Math.PI) / 180;
+  const fov = shot.camera.fov ?? FOV[type];
+  if (type === 'over-shoulder' && shot.camera.from) {
+    // camera behind `from`, looking past their shoulder at the focus subject
+    const a = chars.find((c) => c.id === shot.camera.from), f = focusPoint(shot, chars, 0, dur);
+    if (a) {
+      const ap = evaluateCharacter(a, 0, dur).position;
+      const dx = f[0] - ap[0], dz = f[2] - ap[2], L = Math.hypot(dx, dz) || 1;
+      const side = 0.45, back = 1.3;
+      const pos: Vec3 = [round(ap[0] - (dx / L) * back - (dz / L) * side), CAM_Y[type], round(ap[2] - (dz / L) * back + (dx / L) * side)];
+      const look: Vec3 = [round(f[0]), LOOK_Y[type], round(f[2])];
+      const k1 = {t: 0, position: pos, lookAt: look, fov};
+      if (move === 'push-in') return {keys: [k1, {t: dur, position: [round(pos[0] + (dx / L) * 0.4), pos[1], round(pos[2] + (dz / L) * 0.4)] as Vec3, lookAt: look, fov}], shake, ease: 'inOut'};
+      return {keys: [k1], shake, ease: 'inOut'};
+    }
+  }
   const at = (t: number, distMul = 1, yawOff = 0, yOff = 0, xOff = 0) => {
     const f = focusPoint(shot, chars, t, dur);
     const d = SHOT_DIST[type] * distMul, yaw = yaw0 + yawOff;
     const look: Vec3 = [f[0] + xOff * 0.4, LOOK_Y[type], f[2]];
     const pos: Vec3 = [round(f[0] + Math.sin(yaw) * d + xOff), round(CAM_Y[type] + yOff), round(f[2] + Math.cos(yaw) * d)];
-    return {position: pos, lookAt: look.map((v) => round(v)) as Vec3, fov: type === 'establishing' ? 45 : 38};
+    return {position: pos, lookAt: look.map((v) => round(v)) as Vec3, fov};
   };
   const keys = (() => {
     switch (move) {

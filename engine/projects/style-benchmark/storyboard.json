@@ -1,0 +1,574 @@
+{
+ "id": "style-benchmark",
+ "title": "Style C benchmark",
+ "brief": {
+  "category": "engine-benchmark",
+  "topic": "visual benchmark",
+  "language": "en",
+  "fps": 24
+ },
+ "cast": [
+  "sam",
+  "riley",
+  "max",
+  "jo",
+  "dev"
+ ],
+ "voice": {
+  "provider": "none"
+ },
+ "captions": false,
+ "shots": [
+  {
+   "id": "b1-expressions",
+   "environment": "studio",
+   "duration": 6,
+   "camera": {
+    "shot": "close",
+    "focus": "sam"
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      0,
+      0,
+      0
+     ],
+     "facing": 0
+    }
+   },
+   "beats": [
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 0.0,
+     "expression": "neutral"
+    },
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 0.5,
+     "expression": "happy"
+    },
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 1.0,
+     "expression": "excited"
+    },
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 1.5,
+     "expression": "sad"
+    },
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 2.0,
+     "expression": "angry"
+    },
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 2.5,
+     "expression": "surprised"
+    },
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 3.0,
+     "expression": "scared"
+    },
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 3.5,
+     "expression": "thinking"
+    },
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 4.0,
+     "expression": "worried"
+    },
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 4.5,
+     "expression": "determined"
+    },
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 5.0,
+     "expression": "confused"
+    },
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 5.5,
+     "expression": "smug"
+    }
+   ],
+   "text": [
+    {
+     "text": "1 \u00b7 Expressions",
+     "at": 0,
+     "until": 99,
+     "style": "lower-third",
+     "position": "top"
+    }
+   ]
+  },
+  {
+   "id": "b2-talk",
+   "environment": "living-room",
+   "duration": 4,
+   "camera": {
+    "shot": "two-shot",
+    "focus": [
+     "sam",
+     "riley"
+    ]
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.75,
+      0,
+      0.2
+     ],
+     "facing": 65,
+     "expression": "happy"
+    },
+    "riley": {
+     "at": [
+      0.75,
+      0,
+      0.2
+     ],
+     "facing": -65,
+     "expression": "excited"
+    }
+   },
+   "beats": [
+    {
+     "who": "sam",
+     "do": "talk",
+     "at": 0,
+     "until": 2,
+     "expression": "happy"
+    },
+    {
+     "who": "riley",
+     "do": "nod",
+     "at": 0,
+     "until": 2
+    },
+    {
+     "who": "riley",
+     "do": "talk",
+     "at": 2,
+     "expression": "excited"
+    },
+    {
+     "who": "sam",
+     "do": "think",
+     "at": 2,
+     "expression": "thinking"
+    }
+   ],
+   "text": [
+    {
+     "text": "2 \u00b7 Dialogue",
+     "at": 0,
+     "until": 99,
+     "style": "lower-third",
+     "position": "top"
+    }
+   ]
+  },
+  {
+   "id": "b3-locomotion",
+   "environment": "park",
+   "duration": 4.5,
+   "camera": {
+    "shot": "wide",
+    "move": "track",
+    "focus": "sam",
+    "angle": 10
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -6,
+      0,
+      0.4
+     ],
+     "facing": 90,
+     "expression": "determined"
+    }
+   },
+   "beats": [
+    {
+     "who": "sam",
+     "do": "walk",
+     "at": 0,
+     "until": 2.3,
+     "to": [
+      -2.8,
+      0,
+      0.4
+     ]
+    },
+    {
+     "who": "sam",
+     "do": "run",
+     "at": 2.3,
+     "until": 4.5,
+     "to": [
+      3.6,
+      0,
+      0.4
+     ]
+    }
+   ],
+   "text": [
+    {
+     "text": "3 \u00b7 Walk \u2192 Run",
+     "at": 0,
+     "until": 99,
+     "style": "lower-third",
+     "position": "top"
+    }
+   ]
+  },
+  {
+   "id": "b4-trio",
+   "environment": "street",
+   "duration": 4,
+   "camera": {
+    "shot": "two-shot",
+    "focus": [
+     "max",
+     "jo",
+     "dev"
+    ],
+    "angle": -8
+   },
+   "blocking": {
+    "max": {
+     "at": [
+      -1.2,
+      0,
+      0.3
+     ],
+     "facing": 35,
+     "expression": "happy"
+    },
+    "jo": {
+     "at": [
+      0,
+      0,
+      -0.2
+     ],
+     "facing": 0,
+     "expression": "excited"
+    },
+    "dev": {
+     "at": [
+      1.2,
+      0,
+      0.3
+     ],
+     "facing": -35,
+     "expression": "smug"
+    }
+   },
+   "beats": [
+    {
+     "who": "jo",
+     "do": "talk",
+     "at": 0,
+     "until": 2.2
+    },
+    {
+     "who": "jo",
+     "do": "celebrate",
+     "at": 2.2
+    },
+    {
+     "who": "max",
+     "do": "laugh",
+     "at": 0.4,
+     "expression": "excited"
+    },
+    {
+     "who": "dev",
+     "do": "point",
+     "at": 0.6,
+     "facing": -20
+    },
+    {
+     "who": "dev",
+     "do": "thumbsup",
+     "at": 2.4,
+     "expression": "happy"
+    }
+   ],
+   "text": [
+    {
+     "text": "4 \u00b7 Three characters",
+     "at": 0,
+     "until": 99,
+     "style": "lower-third",
+     "position": "top"
+    }
+   ]
+  },
+  {
+   "id": "b5-push",
+   "environment": "park",
+   "duration": 4.5,
+   "camera": {
+    "shot": "low",
+    "move": "orbit",
+    "focus": [
+     0.4,
+     0,
+     0
+    ],
+    "angle": -30
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.45,
+      0,
+      0.55
+     ],
+     "facing": 90,
+     "expression": "determined"
+    },
+    "riley": {
+     "at": [
+      -0.5,
+      0,
+      -0.5
+     ],
+     "facing": 90,
+     "expression": "determined"
+    }
+   },
+   "props": [
+    {
+     "kind": "boulder",
+     "at": [
+      1.15,
+      0,
+      0
+     ],
+     "scale": 1.4,
+     "move": {
+      "to": [
+       9,
+       0,
+       0
+      ],
+      "start": 2.8,
+      "end": 4.5,
+      "roll": true
+     }
+    }
+   ],
+   "beats": [
+    {
+     "who": "sam",
+     "do": "push",
+     "at": 0,
+     "until": 2.8,
+     "reach": {
+      "left": [
+       0.22,
+       1.0,
+       0.68
+      ],
+      "right": [
+       0.22,
+       1.0,
+       0.42
+      ]
+     }
+    },
+    {
+     "who": "riley",
+     "do": "push",
+     "at": 0,
+     "until": 2.8,
+     "reach": {
+      "left": [
+       0.22,
+       1.0,
+       -0.38
+      ],
+      "right": [
+       0.22,
+       1.0,
+       -0.64
+      ]
+     }
+    },
+    {
+     "who": "sam",
+     "do": "celebrate",
+     "at": 3.0,
+     "facing": 20,
+     "expression": "excited"
+    },
+    {
+     "who": "riley",
+     "do": "jump",
+     "at": 3.0,
+     "facing": -20,
+     "expression": "happy"
+    }
+   ],
+   "text": [
+    {
+     "text": "5 \u00b7 Push (IK)",
+     "at": 0,
+     "until": 99,
+     "style": "lower-third",
+     "position": "top"
+    }
+   ]
+  },
+  {
+   "id": "b6-outdoor",
+   "environment": "cliff",
+   "timeOfDay": "dusk",
+   "duration": 4,
+   "camera": {
+    "shot": "wide",
+    "move": "push-in",
+    "focus": [
+     0,
+     0,
+     0
+    ],
+    "angle": 0,
+    "fov": 42
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.55,
+      0,
+      -2.2
+     ],
+     "facing": 180
+    },
+    "riley": {
+     "at": [
+      0.55,
+      0,
+      -2.2
+     ],
+     "facing": 180
+    }
+   },
+   "beats": [
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 0
+    },
+    {
+     "who": "riley",
+     "do": "point",
+     "at": 1.0,
+     "facing": 195
+    },
+    {
+     "who": "sam",
+     "do": "wave",
+     "at": 2.2,
+     "facing": 170
+    }
+   ],
+   "text": [
+    {
+     "text": "6 \u00b7 Outdoor (dusk)",
+     "at": 0,
+     "until": 99,
+     "style": "lower-third",
+     "position": "top"
+    }
+   ]
+  },
+  {
+   "id": "b7-indoor",
+   "environment": "office",
+   "duration": 4,
+   "camera": {
+    "shot": "medium",
+    "move": "push-in",
+    "focus": [
+     4.6,
+     0,
+     -1.4
+    ],
+    "angle": 25
+   },
+   "blocking": {
+    "dev": {
+     "at": [
+      5.6,
+      0,
+      -1.32
+     ],
+     "facing": 180,
+     "expression": "thinking"
+    },
+    "jo": {
+     "at": [
+      3.9,
+      0,
+      -1.2
+     ],
+     "facing": 60,
+     "expression": "happy"
+    }
+   },
+   "beats": [
+    {
+     "who": "dev",
+     "do": "computer",
+     "at": 0
+    },
+    {
+     "who": "jo",
+     "do": "hold",
+     "at": 0,
+     "prop": "coffee"
+    },
+    {
+     "who": "jo",
+     "do": "talk",
+     "at": 1.5,
+     "prop": "coffee"
+    }
+   ],
+   "text": [
+    {
+     "text": "7 \u00b7 Indoor",
+     "at": 0,
+     "until": 99,
+     "style": "lower-third",
+     "position": "top"
+    }
+   ]
+  }
+ ]
+}

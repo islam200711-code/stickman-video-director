@@ -1,155 +1,199 @@
 /**
- * Deterministic stickman animation library.
- * Every action is a pure function (localTime, ctx) -> Pose. No randomness, no
- * state: the same frame always produces the same pose, so Remotion can render
- * frames in any order / in parallel.
+ * Deterministic stickman animation library (Style C: stylized 3D stickman).
+ * Every action is a pure function (localTime, ctx) -> Pose. There is no randomness
+ * and no state: the same frame always produces the same pose, so Remotion can
+ * render frames in any order and in parallel.
  *
  * Angle conventions (radians, character space, character faces +z):
  *  limb.fwd   raise limb forward (+) / backward (-)
  *  limb.out   raise limb sideways away from body
- *  arm.elbow  forearm flex (forward/up), leg.knee shin flex (backward)
+ *  limb.bend  forearm flex (forward/up) or shin flex (backward)
  *  lean       torso pitch forward (+), side = roll, twist = yaw
- *  tilt       whole-body pitch about the hip (used for falling / lying)
+ *  tilt       whole-body pitch about the hip (falling / lying)
+ * Hands carry a shape so gestures read at small sizes.
+ *
+ * Principles applied (see docs/STYLE_GUIDE.md): weight shift and hip bob in gaits,
+ * arm swing lagging the legs (follow-through), anticipation before jumps/reactions,
+ * momentum-driven lean from locomotion acceleration, eased cross-fades between cues.
  */
-import type {Action, ActionCue, Expression, SceneCharacter, Vec3} from '../schema/scene';
+import type {Action, Expression, SceneCharacter, Vec3} from '../schema/scene';
 
+export type HandShape = 'relaxed' | 'fist' | 'point' | 'open' | 'thumb';
 export type Limb = {fwd: number; out: number; bend: number};
 export type Pose = {
   y: number; lean: number; side: number; twist: number; tilt: number;
   headPitch: number; headYaw: number; headRoll: number;
   lArm: Limb; rArm: Limb; lLeg: Limb; rLeg: Limb;
+  lHand: HandShape; rHand: HandShape;
 };
-export type Ctx = {intensity: number; travel: number; seed: number};
+/** speed: 0..1 fraction of cruising speed; accel: signed, ~-1..1 */
+export type Ctx = {intensity: number; travel: number; seed: number; speed: number; accel: number};
 
+/** Locked Style C proportions (metres, scale 1). Total height ~1.92. */
 export const PROPORTIONS = {
-  thigh: 0.48, shin: 0.47, hip: 0.95, torso: 0.6, neck: 0.1, head: 0.17,
-  upperArm: 0.32, forearm: 0.3, shoulderWidth: 0.17, hipWidth: 0.09,
+  thigh: 0.46, shin: 0.45, hip: 0.91, torso: 0.56, neck: 0.07, head: 0.2,
+  upperArm: 0.31, forearm: 0.29, shoulderWidth: 0.16, hipWidth: 0.085,
+  shoulderDrop: 0.06,
 } as const;
 
 const L = (fwd = 0, out = 0, bend = 0): Limb => ({fwd, out, bend});
 export const REST: Pose = {
   y: 0, lean: 0, side: 0, twist: 0, tilt: 0, headPitch: 0, headYaw: 0, headRoll: 0,
-  lArm: L(0, 0.12, 0.12), rArm: L(0, 0.12, 0.12), lLeg: L(0, 0.03, 0), rLeg: L(0, 0.03, 0),
+  lArm: L(0.02, 0.14, 0.18), rArm: L(0.02, 0.14, 0.18), lLeg: L(0, 0.035, 0.02), rLeg: L(0, 0.035, 0.02),
+  lHand: 'relaxed', rHand: 'relaxed',
 };
 const TAU = Math.PI * 2;
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 export const smooth = (x: number) => {const c = clamp01(x); return c * c * (3 - 2 * c);};
+/** overshoot ease for snappy reactions (follow-through) */
+const backOut = (x: number) => {const c = clamp01(x), s = 1.6; return 1 + (s + 1) * Math.pow(c - 1, 3) + s * Math.pow(c - 1, 2);};
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-const mix = (base: Pose, over: Partial<Pose>): Pose => ({
+type PoseOver = Partial<Omit<Pose, 'lArm' | 'rArm' | 'lLeg' | 'rLeg'>> & {lArm?: Partial<Limb>; rArm?: Partial<Limb>; lLeg?: Partial<Limb>; rLeg?: Partial<Limb>};
+const mix = (base: Pose, over: PoseOver): Pose => ({
   ...base, ...over,
   lArm: {...base.lArm, ...(over.lArm ?? {})}, rArm: {...base.rArm, ...(over.rArm ?? {})},
   lLeg: {...base.lLeg, ...(over.lLeg ?? {})}, rLeg: {...base.rLeg, ...(over.rLeg ?? {})},
-});
-const breathe = (t: number, s: number) => Math.sin(t * 1.6 + s) * 0.008;
+} as Pose);
+const breathe = (t: number, s: number) => Math.sin(t * 1.7 + s) * 0.006;
 
-const SIT: Partial<Pose> = {
-  y: -0.45, lean: 0.05, lLeg: L(Math.PI / 2, 0.08, Math.PI / 2), rLeg: L(Math.PI / 2, 0.08, Math.PI / 2),
-  lArm: L(0.5, 0.12, 0.9), rArm: L(0.5, 0.12, 0.9),
+const SIT: PoseOver = {
+  y: -0.43, lean: 0.06, lLeg: L(Math.PI / 2, 0.1, Math.PI / 2), rLeg: L(Math.PI / 2, 0.1, Math.PI / 2),
+  lArm: L(0.55, 0.12, 0.95), rArm: L(0.55, 0.12, 0.95),
 };
-const LYING: Partial<Pose> = {y: -0.82, tilt: -Math.PI / 2, lArm: L(0, 0.5, 0.1), rArm: L(0, 0.5, 0.1), lLeg: L(0, 0.08, 0), rLeg: L(0, 0.08, 0)};
+const LYING: PoseOver = {y: -0.69, tilt: -Math.PI / 2, lArm: L(0.1, 0.55, 0.2), rArm: L(0.1, 0.55, 0.2), lLeg: L(0.05, 0.09, 0.05), rLeg: L(0, 0.09, 0.1), lHand: 'open', rHand: 'open'};
 
-function gait(t: number, c: Ctx, stride: number, amp: number, run: boolean): Pose {
-  // phase from distance travelled => feet never slide; in-place uses time
-  const p = c.travel > 0 ? (c.travel / stride) * TAU : t * TAU * (run ? 1.5 : 1);
-  const s = Math.sin(p), k = c.intensity;
+/** Weighted gait. Phase comes from distance travelled, so planted feet never slide. */
+function gait(t: number, c: Ctx, stride: number, run: boolean): Pose {
+  const p = c.travel > 0 ? (c.travel / stride) * TAU : t * TAU * (run ? 1.45 : 0.95);
+  const k = c.intensity * (c.travel > 0 ? 0.35 + 0.65 * c.speed : 1); // amplitude follows speed (start/stop momentum)
+  const s = Math.sin(p), co = Math.cos(p);
+  const lag = 0.35; // arms trail legs: follow-through
+  const sa = Math.sin(p - lag);
+  const A = run ? 0.75 : 0.42;
+  // knee: flexes during swing (leg moving forward) and slightly at contact absorption
+  const swingL = Math.max(0, co), swingR = Math.max(0, -co);
+  const absorb = 0.08 * Math.abs(Math.sin(2 * p));
   return mix(REST, {
-    y: (run ? 0.06 : 0.025) * Math.abs(Math.cos(p)) * k - (run ? 0.04 : 0.01),
-    lean: run ? 0.28 * k : 0.05,
-    twist: 0.08 * s * k,
-    headPitch: run ? -0.15 : 0,
-    lLeg: L(amp * s * k, 0.03, Math.max(0, -Math.cos(p)) * (run ? 1.5 : 0.7) * k + 0.1),
-    rLeg: L(-amp * s * k, 0.03, Math.max(0, Math.cos(p)) * (run ? 1.5 : 0.7) * k + 0.1),
-    lArm: L(-amp * 0.9 * s * k, 0.12, run ? 1.5 : 0.25 + 0.15 * Math.max(0, -s)),
-    rArm: L(amp * 0.9 * s * k, 0.12, run ? 1.5 : 0.25 + 0.15 * Math.max(0, s)),
+    y: (run ? -0.05 + 0.07 * Math.abs(co) : -0.012 + 0.022 * Math.abs(co)) * k,            // hip bob twice per cycle
+    lean: (run ? 0.26 : 0.06) * k - c.accel * 0.12,                                       // momentum lean
+    side: (run ? 0.03 : 0.045) * s * k,                                                   // weight shift
+    twist: 0.12 * s * k,                                                                  // counter-rotation
+    headPitch: (run ? -0.14 : -0.03) * k + c.accel * 0.06,                                // head stabilises against lean
+    headRoll: -0.03 * s * k,
+    lLeg: L(A * s * k, 0.035, (run ? 1.55 : 0.75) * swingL * k + absorb + 0.05),
+    rLeg: L(-A * s * k, 0.035, (run ? 1.55 : 0.75) * swingR * k + absorb + 0.05),
+    lArm: L(-A * 0.85 * sa * k, 0.13, run ? 1.55 : 0.3 + 0.35 * Math.max(0, -sa)),
+    rArm: L(A * 0.85 * sa * k, 0.13, run ? 1.55 : 0.3 + 0.35 * Math.max(0, sa)),
+    lHand: run ? 'fist' : 'relaxed', rHand: run ? 'fist' : 'relaxed',
   });
 }
 
+const reactIn = (t: number, d = 0.28) => backOut(t / d);
+
 export const ACTION_FNS: Record<Action, (t: number, c: Ctx) => Pose> = {
-  idle: (t, c) => mix(REST, {y: breathe(t, c.seed), headRoll: Math.sin(t * 0.7 + c.seed) * 0.04,
-    lArm: L(Math.sin(t * 1.1 + c.seed) * 0.04, 0.12, 0.12), rArm: L(Math.sin(t * 1.1 + c.seed + 1) * 0.04, 0.12, 0.12)}),
-  stand: (t, c) => {const a = smooth(t / 0.5); return blendPose(mix(REST, SIT), ACTION_FNS.idle(t, c), a);},
-  walk: (t, c) => gait(t, c, 1.3, 0.45, false),
-  run: (t, c) => gait(t, c, 2.4, 0.85, true),
-  escape: (t, c) => {const g = gait(t, c, 2.4, 0.85, true);
-    return mix(g, {headYaw: 0.9 * Math.sin(Math.min(t, 1.5) * 2) , lArm: L(1.0 + 0.6 * Math.sin(t * 13), 0.9, 0.6), rArm: L(1.0 + 0.6 * Math.sin(t * 13 + 2), 0.9, 0.6)});},
+  idle: (t, c) => mix(REST, {
+    y: breathe(t, c.seed), side: Math.sin(t * 0.55 + c.seed) * 0.018, headRoll: Math.sin(t * 0.7 + c.seed) * 0.035, headYaw: Math.sin(t * 0.33 + c.seed) * 0.06,
+    lArm: L(0.02 + Math.sin(t * 1.1 + c.seed) * 0.035, 0.14, 0.18), rArm: L(0.02 + Math.sin(t * 1.1 + c.seed + 1) * 0.035, 0.14, 0.18),
+    lLeg: L(0.02, 0.05, 0.03), rLeg: L(-0.02, 0.035, 0.06)}),
+  stand: (t, c) => {const a = smooth(t / 0.55); const p = blendPose(mix(REST, SIT), ACTION_FNS.idle(t, c), a); return mix(p, {lean: p.lean + 0.35 * Math.sin(Math.PI * a)});},
+  walk: (t, c) => gait(t, c, 1.3, false),
+  run: (t, c) => gait(t, c, 2.5, true),
+  escape: (t, c) => {const g = gait(t, c, 2.5, true);
+    return mix(g, {headYaw: 0.85 * Math.sin(Math.min(t, 1.6) * 2), lArm: L(1.1 + 0.55 * Math.sin(t * 12), 0.85, 0.6), rArm: L(1.1 + 0.55 * Math.sin(t * 12 + 2), 0.85, 0.6), lHand: 'open', rHand: 'open'});},
   jump: (t, c) => {
-    const T = 1.1, u = t % (T + 0.3);
-    if (u < 0.25) {const a = smooth(u / 0.25); return mix(REST, {y: -0.18 * a, lean: 0.25 * a, lLeg: L(0.6 * a, 0.03, 1.1 * a), rLeg: L(0.6 * a, 0.03, 1.1 * a), lArm: L(-0.6 * a, 0.12, 0.3), rArm: L(-0.6 * a, 0.12, 0.3)});}
-    if (u < 0.85) {const a = (u - 0.25) / 0.6, h = 4 * a * (1 - a) * 0.75 * c.intensity;
-      return mix(REST, {y: h, lean: -0.05, lLeg: L(0.25, 0.08, 0.5), rLeg: L(0.1, 0.08, 0.3), lArm: L(2.6, 0.4, 0.2), rArm: L(2.6, 0.4, 0.2)});}
-    if (u < 1.1) {const a = 1 - smooth((u - 0.85) / 0.25); return mix(REST, {y: -0.15 * a, lean: 0.2 * a, lLeg: L(0.5 * a, 0.05, 1.0 * a), rLeg: L(0.5 * a, 0.05, 1.0 * a), lArm: L(0.4, 0.5 * a + 0.12, 0.3), rArm: L(0.4, 0.5 * a + 0.12, 0.3)});}
+    const u = t % 1.45;
+    if (u < 0.3) {const a = smooth(u / 0.3); return mix(REST, {y: -0.2 * a, lean: 0.3 * a, headPitch: -0.15 * a, lLeg: L(0.65 * a, 0.04, 1.2 * a), rLeg: L(0.65 * a, 0.04, 1.2 * a), lArm: L(-0.7 * a, 0.15, 0.4), rArm: L(-0.7 * a, 0.15, 0.4), lHand: 'fist', rHand: 'fist'});}
+    if (u < 0.9) {const a = (u - 0.3) / 0.6, h = 4 * a * (1 - a) * 0.7 * c.intensity;
+      return mix(REST, {y: h, lean: -0.08, headPitch: -0.2, lLeg: L(0.3, 0.09, 0.6), rLeg: L(0.1, 0.09, 0.35), lArm: L(2.7, 0.35, 0.15), rArm: L(2.7, 0.35, 0.15), lHand: 'open', rHand: 'open'});}
+    if (u < 1.2) {const a = 1 - smooth((u - 0.9) / 0.3); return mix(REST, {y: -0.17 * a, lean: 0.24 * a, lLeg: L(0.55 * a, 0.06, 1.05 * a), rLeg: L(0.55 * a, 0.06, 1.05 * a), lArm: L(0.5 * a, 0.55 * a + 0.14, 0.3), rArm: L(0.5 * a, 0.55 * a + 0.14, 0.3)});}
     return ACTION_FNS.idle(t, c);
   },
   fall: (t, c) => {
-    const a = smooth(t / 0.55), flail = (1 - a) * 0.8;
+    const a = smooth(t / 0.6), flail = (1 - a);
     const p = blendPose(REST, mix(REST, LYING), a);
-    return mix(p, {headPitch: -0.3 * (1 - a), lArm: L(2.0 * (1 - a) + Math.sin(t * 20) * flail * 0.5, 0.5 + flail, 0.4), rArm: L(2.0 * (1 - a) + Math.cos(t * 20) * flail * 0.5, 0.5 + flail, 0.4),
-      lLeg: L(0.4 * Math.sin(Math.PI * a), 0.08, 0.3 * Math.sin(Math.PI * a)), rLeg: L(0.8 * Math.sin(Math.PI * a), 0.08, 0.2)});
+    return mix(p, {headPitch: -0.35 * flail, lArm: L(2.1 * flail + Math.sin(t * 19) * flail * 0.4, 0.55 + flail * 0.6, 0.4), rArm: L(2.1 * flail + Math.cos(t * 19) * flail * 0.4, 0.55 + flail * 0.6, 0.4),
+      lLeg: L(0.4 * Math.sin(Math.PI * a), 0.09, 0.35 * Math.sin(Math.PI * a)), rLeg: L(0.85 * Math.sin(Math.PI * a), 0.09, 0.25), lHand: 'open', rHand: 'open'});
   },
-  lying: (t, c) => mix(REST, {...LYING, headRoll: Math.sin(t * 0.8) * 0.05}),
-  sit: (t, c) => blendPose(REST, mix(REST, {...SIT, y: (SIT.y ?? 0) + breathe(t, c.seed)}), smooth(t / 0.45)),
+  lying: (t) => mix(REST, {...LYING, headRoll: Math.sin(t * 0.8) * 0.05}),
+  sit: (t, c) => {const a = smooth(t / 0.5); const p = blendPose(REST, mix(REST, {...SIT, y: (SIT.y ?? 0) + breathe(t, c.seed)}), a); return mix(p, {lean: p.lean + 0.3 * Math.sin(Math.PI * a)});},
+  crouch: (t, c) => {const a = smooth(t / 0.35); return mix(REST, {y: -0.32 * a + breathe(t, c.seed), lean: 0.35 * a, headPitch: -0.25 * a, lLeg: L(0.9 * a, 0.12, 1.5 * a), rLeg: L(0.7 * a, 0.12, 1.3 * a), lArm: L(0.7 * a, 0.2, 0.8), rArm: L(0.6 * a, 0.2, 0.9)});},
   talk: (t, c) => {
-    const g = Math.sin(t * 3.1 + c.seed), g2 = Math.sin(t * 2.3 + 1 + c.seed);
-    return mix(ACTION_FNS.idle(t, c), {headPitch: Math.sin(t * 4.2) * 0.05 * c.intensity, headYaw: Math.sin(t * 0.9) * 0.08,
-      rArm: L(0.55 + 0.25 * g * c.intensity, 0.25, 1.3 + 0.25 * g2), lArm: L(0.15 + 0.15 * g2 * c.intensity, 0.18, 0.5 + 0.3 * Math.max(0, g))});
+    const g = Math.sin(t * 3.0 + c.seed), g2 = Math.sin(t * 2.1 + 1 + c.seed), beat = Math.max(0, Math.sin(t * 4.4 + c.seed));
+    return mix(ACTION_FNS.idle(t, c), {headPitch: -0.04 + beat * 0.07 * c.intensity, headYaw: Math.sin(t * 0.9) * 0.1, lean: 0.03 + 0.03 * beat,
+      rArm: L(0.6 + 0.28 * g * c.intensity, 0.28, 1.35 + 0.3 * g2), lArm: L(0.2 + 0.22 * g2 * c.intensity, 0.2, 0.55 + 0.4 * Math.max(0, g)),
+      rHand: 'open', lHand: g2 > 0.3 ? 'open' : 'relaxed'});
   },
-  point: (t, c) => {const a = smooth(t / 0.3);
-    return mix(ACTION_FNS.idle(t, c), {twist: -0.15 * a, rArm: L(1.45 * a, 0.25 * a + 0.12, 0.05), lArm: L(0, 0.15, 0.3), headYaw: -0.1 * a});},
-  think: (t, c) => {const a = smooth(t / 0.4);
-    return mix(ACTION_FNS.idle(t, c), {headRoll: 0.18 * a, headPitch: -0.1 * a + Math.sin(t * 1.3) * 0.03, headYaw: 0.15 * a,
-      rArm: L(0.45 * a, 0.05, 2.45 * a + 0.1), lArm: L(0.7 * a, -0.25 * a + 0.12, 1.7 * a)});},
-  surprised: (t, c) => {const a = smooth(t / 0.18), hop = t < 0.35 ? Math.sin((t / 0.35) * Math.PI) * 0.12 : 0;
-    return mix(REST, {y: hop + breathe(t, c.seed), lean: -0.18 * a, headPitch: -0.15 * a,
-      lArm: L(0.4 * a, 1.9 * a * c.intensity + 0.12, 0.9 * a), rArm: L(0.4 * a, 1.9 * a * c.intensity + 0.12, 0.9 * a),
-      lLeg: L(-0.1 * a, 0.12 * a + 0.03, 0.1), rLeg: L(0.15 * a, 0.12 * a + 0.03, 0.1)});},
-  celebrate: (t, c) => {const b = Math.abs(Math.sin(t * 2 * Math.PI * 1.3));
-    return mix(REST, {y: 0.14 * b * c.intensity, headPitch: -0.15, lean: -0.05,
-      lArm: L(0.35, 2.55 + 0.15 * Math.sin(t * 8), 0.15), rArm: L(0.35, 2.55 + 0.15 * Math.sin(t * 8 + 1), 0.15),
-      lLeg: L(0.15 * b, 0.1, 0.5 * b), rLeg: L(0.15 * b, 0.1, 0.5 * b)});},
-  argue: (t, c) => {const g = Math.sin(t * 2 * Math.PI * 1.6 + c.seed), k = c.intensity;
-    return mix(REST, {lean: 0.16 * k, headPitch: 0.05 + 0.08 * Math.max(0, g), y: breathe(t, c.seed),
-      rArm: L(0.9 + 0.45 * g * k, 0.3, 1.1 - 0.5 * g), lArm: L(0.5 - 0.3 * g * k, 0.35, 1.5), lLeg: L(0.2, 0.06, 0.1), rLeg: L(-0.15, 0.06, 0)});},
+  point: (t, c) => {const a = reactIn(t, 0.35);
+    return mix(ACTION_FNS.idle(t, c), {twist: -0.15 * a, lean: 0.04 * a, rArm: L(1.45 * a, 0.22 * a + 0.12, 0.06), lArm: L(0.05, 0.16, 0.35), headYaw: -0.12 * a, rHand: 'point'});},
+  think: (t, c) => {const a = smooth(t / 0.45);
+    return mix(ACTION_FNS.idle(t, c), {headRoll: 0.18 * a, headPitch: -0.12 * a + Math.sin(t * 1.3) * 0.03, headYaw: 0.18 * a, side: -0.04 * a,
+      rArm: L(0.42 * a, 0.04, 2.5 * a + 0.12), lArm: L(0.72 * a, -0.25 * a + 0.14, 1.75 * a), rHand: 'fist'});},
+  surprised: (t, c) => {const a = reactIn(t, 0.22), hop = t < 0.36 ? Math.sin((t / 0.36) * Math.PI) * 0.12 : 0;
+    return mix(REST, {y: hop + breathe(t, c.seed), lean: -0.2 * a, headPitch: -0.18 * a,
+      lArm: L(0.45 * a, 1.85 * a * c.intensity + 0.14, 0.95 * a), rArm: L(0.45 * a, 1.85 * a * c.intensity + 0.14, 0.95 * a),
+      lLeg: L(-0.12 * a, 0.12 * a + 0.035, 0.12), rLeg: L(0.15 * a, 0.12 * a + 0.035, 0.12), lHand: 'open', rHand: 'open'});},
+  celebrate: (t, c) => {const b = Math.abs(Math.sin(t * TAU * 1.3)), a = smooth(t / 0.25);
+    return mix(REST, {y: 0.13 * b * c.intensity * a, headPitch: -0.18, lean: -0.06, side: 0.05 * Math.sin(t * TAU * 0.65),
+      lArm: L(0.35, (2.55 + 0.15 * Math.sin(t * 8)) * a + 0.14, 0.18), rArm: L(0.35, (2.55 + 0.15 * Math.sin(t * 8 + 1)) * a + 0.14, 0.18),
+      lLeg: L(0.15 * b, 0.1, 0.5 * b), rLeg: L(0.15 * b, 0.1, 0.5 * b), lHand: 'fist', rHand: 'fist'});},
+  argue: (t, c) => {const g = Math.sin(t * TAU * 1.5 + c.seed), k = c.intensity;
+    return mix(REST, {lean: 0.17 * k, headPitch: 0.06 + 0.08 * Math.max(0, g), y: breathe(t, c.seed), side: 0.03 * g,
+      rArm: L(0.95 + 0.45 * g * k, 0.3, 1.1 - 0.5 * g), lArm: L(0.5 - 0.3 * g * k, 0.35, 1.5), lLeg: L(0.2, 0.06, 0.1), rLeg: L(-0.15, 0.06, 0.05),
+      rHand: g > 0 ? 'point' : 'open', lHand: 'fist'});},
   fight: (t, c) => {
-    const u = (t * 2.2) % 2, punchR = u < 1 ? Math.sin(Math.min(u, 1) * Math.PI) : 0, punchL = u >= 1 ? Math.sin((u - 1) * Math.PI) : 0;
-    return mix(REST, {lean: 0.15, twist: 0.2 * (punchR - punchL), y: -0.06 + Math.sin(t * 9) * 0.015,
-      rArm: L(0.9 + 0.6 * punchR, 0.15, 2.0 - 1.9 * punchR), lArm: L(0.9 + 0.6 * punchL, 0.15, 2.0 - 1.9 * punchL),
-      lLeg: L(0.35, 0.1, 0.35), rLeg: L(-0.3, 0.1, 0.25)});},
-  work: (t, c) => {const h = Math.sin(t * 2 * Math.PI * 1.8);
-    return mix(REST, {lean: 0.22, headPitch: 0.25, y: -0.03, rArm: L(1.0 + 0.55 * h, 0.2, 0.9 - 0.4 * h), lArm: L(0.8, 0.1, 1.2), lLeg: L(0.1, 0.1, 0.15), rLeg: L(-0.05, 0.1, 0.05)});},
-  computer: (t, c) => {const s = mix(REST, SIT);
-    return mix(s, {lean: 0.12, headPitch: 0.18 + Math.sin(t * 0.6) * 0.03,
-      rArm: L(1.05 + Math.sin(t * 17) * 0.05, 0.08, 1.25), lArm: L(1.05 + Math.sin(t * 15 + 1) * 0.05, 0.08, 1.25)});},
-  hold: (t, c) => mix(ACTION_FNS.idle(t, c), {rArm: L(0.55, 0.15, 1.35), headPitch: 0.08}),
-  wave: (t, c) => {const a = smooth(t / 0.3);
-    return mix(ACTION_FNS.idle(t, c), {rArm: L(0.2, 2.5 * a, 0.5 + 0.45 * Math.sin(t * 2 * Math.PI * 2.2)), headRoll: -0.08});},
-  shrug: (t, c) => {const a = Math.sin(clamp01(t / 0.8) * Math.PI);
-    return mix(ACTION_FNS.idle(t, c), {y: 0.02 * a, headRoll: 0.15 * a, lArm: L(0.4, 0.5 * a + 0.12, 1.6 * a), rArm: L(0.4, 0.5 * a + 0.12, 1.6 * a)});},
+    const u = (t * 2.1) % 2, punchR = u < 1 ? Math.sin(Math.min(u, 1) * Math.PI) : 0, punchL = u >= 1 ? Math.sin((u - 1) * Math.PI) : 0;
+    return mix(REST, {lean: 0.16, twist: 0.25 * (punchR - punchL), y: -0.07 + Math.sin(t * 9) * 0.015,
+      rArm: L(0.95 + 0.55 * punchR, 0.15, 2.0 - 1.9 * punchR), lArm: L(0.95 + 0.55 * punchL, 0.15, 2.0 - 1.9 * punchL),
+      lLeg: L(0.35, 0.1, 0.38), rLeg: L(-0.3, 0.1, 0.28), lHand: 'fist', rHand: 'fist'});},
+  work: (t, c) => {const h = Math.sin(t * TAU * 1.8);
+    return mix(REST, {lean: 0.22, headPitch: 0.25, y: -0.03, rArm: L(1.0 + 0.55 * h, 0.2, 0.9 - 0.4 * h), lArm: L(0.8, 0.1, 1.2), lLeg: L(0.1, 0.1, 0.15), rLeg: L(-0.05, 0.1, 0.05), rHand: 'fist'});},
+  computer: (t) => {const s = mix(REST, SIT);
+    return mix(s, {lean: 0.12, headPitch: 0.16 + Math.sin(t * 0.6) * 0.03,
+      rArm: L(1.0 + Math.sin(t * 17) * 0.05, 0.1, 1.3), lArm: L(1.0 + Math.sin(t * 15 + 1) * 0.05, 0.1, 1.3), lHand: 'open', rHand: 'open'});},
+  hold: (t, c) => mix(ACTION_FNS.idle(t, c), {rArm: L(0.55, 0.15, 1.4), headPitch: 0.06, rHand: 'fist'}),
+  wave: (t, c) => {const a = reactIn(t, 0.35);
+    return mix(ACTION_FNS.idle(t, c), {side: -0.04 * a, rArm: L(0.2, 2.45 * a + 0.14, 0.5 + 0.45 * Math.sin(t * TAU * 2.1)), headRoll: -0.09 * a, rHand: 'open'});},
+  shrug: (t, c) => {const a = Math.sin(clamp01(t / 0.9) * Math.PI);
+    return mix(ACTION_FNS.idle(t, c), {y: 0.025 * a, headRoll: 0.17 * a, headPitch: -0.05 * a, lArm: L(0.45, 0.5 * a + 0.14, 1.65 * a), rArm: L(0.45, 0.5 * a + 0.14, 1.65 * a), lHand: 'open', rHand: 'open'});},
   facepalm: (t, c) => {const a = smooth(t / 0.35);
-    return mix(ACTION_FNS.idle(t, c), {headPitch: 0.35 * a, lean: 0.08 * a, rArm: L(0.95 * a, 0.0, 2.45 * a + 0.1)});},
-  push: (t, c) => {const p = Math.sin(t * 2 * Math.PI * 0.9) * c.intensity;
-    return mix(REST, {lean: 0.5 + 0.06 * p, y: -0.1, headPitch: -0.35, rArm: L(1.35, 0.1, 0.55 + 0.2 * p), lArm: L(1.35, 0.1, 0.55 + 0.2 * p),
-      lLeg: L(0.45, 0.05, 0.7), rLeg: L(-0.45 - 0.08 * p, 0.05, 0.15)});},
-  thumbsup: (t, c) => {const a = smooth(t / 0.3);
-    return mix(ACTION_FNS.idle(t, c), {rArm: L(1.1 * a, 0.25, 1.5 * a), headRoll: -0.1 * a});},
+    return mix(ACTION_FNS.idle(t, c), {headPitch: 0.36 * a, lean: 0.09 * a, rArm: L(0.95 * a, 0.0, 2.45 * a + 0.12), rHand: 'open'});},
+  thumbsup: (t, c) => {const a = reactIn(t, 0.3);
+    return mix(ACTION_FNS.idle(t, c), {rArm: L(1.1 * a, 0.25, 1.55 * a), headRoll: -0.1 * a, rHand: 'thumb'});},
+  push: (t, c) => {const p = Math.sin(t * TAU * 0.85) * c.intensity;
+    return mix(REST, {lean: 0.52 + 0.06 * p, y: -0.11, headPitch: -0.38, rArm: L(1.35, 0.12, 0.5 + 0.2 * p), lArm: L(1.35, 0.12, 0.5 + 0.2 * p),
+      lLeg: L(0.5, 0.05, 0.75), rLeg: L(-0.48 - 0.08 * p, 0.05, 0.15), lHand: 'open', rHand: 'open'});},
+  reach: (t, c) => {const a = smooth(t / 0.4);
+    return mix(ACTION_FNS.idle(t, c), {lean: 0.08 * a, rArm: L(1.2 * a, 0.15, 0.4), rHand: 'open'});},
+  clap: (t, c) => {const k = Math.abs(Math.sin(t * TAU * 1.8));
+    return mix(ACTION_FNS.idle(t, c), {headPitch: -0.05, lArm: L(1.15, 0.05 + 0.4 * k, 1.2), rArm: L(1.15, 0.05 + 0.4 * k, 1.2), lHand: 'open', rHand: 'open'});},
+  nod: (t, c) => mix(ACTION_FNS.idle(t, c), {headPitch: 0.16 * Math.max(0, Math.sin(t * TAU * 1.6)) * c.intensity}),
+  headshake: (t, c) => mix(ACTION_FNS.idle(t, c), {headYaw: 0.32 * Math.sin(t * TAU * 1.8) * c.intensity, headPitch: 0.05}),
+  laugh: (t, c) => {const b = Math.sin(t * TAU * 3.2);
+    return mix(ACTION_FNS.idle(t, c), {headPitch: -0.22 + 0.06 * b, lean: -0.08 + 0.03 * b, y: 0.01 * b, lArm: L(0.6, 0.2, 1.7), rArm: L(0.6, 0.2, 1.7), lHand: 'fist', rHand: 'fist'});},
 };
 
 export function blendPose(a: Pose, b: Pose, t: number): Pose {
   const lb = (x: Limb, y: Limb): Limb => ({fwd: lerp(x.fwd, y.fwd, t), out: lerp(x.out, y.out, t), bend: lerp(x.bend, y.bend, t)});
   const n = (k: keyof Pose) => lerp(a[k] as number, b[k] as number, t);
   return {y: n('y'), lean: n('lean'), side: n('side'), twist: n('twist'), tilt: n('tilt'), headPitch: n('headPitch'), headYaw: n('headYaw'), headRoll: n('headRoll'),
-    lArm: lb(a.lArm, b.lArm), rArm: lb(a.rArm, b.rArm), lLeg: lb(a.lLeg, b.lLeg), rLeg: lb(a.rLeg, b.rLeg)};
+    lArm: lb(a.lArm, b.lArm), rArm: lb(a.rArm, b.rArm), lLeg: lb(a.lLeg, b.lLeg), rLeg: lb(a.rLeg, b.rLeg),
+    lHand: t < 0.5 ? a.lHand : b.lHand, rHand: t < 0.5 ? a.rHand : b.rHand};
 }
 
 export type CharacterFrame = {
   pose: Pose; position: Vec3; facing: number; expression: Expression; talking: boolean; prop?: string; action: Action;
+  reach?: {left?: Vec3; right?: Vec3; weight: number};
+  lookAt?: Vec3;
 };
 
 const LOCOMOTION = new Set<Action>(['walk', 'run', 'escape']);
-const BLEND = 0.3;
+const BLEND = 0.35;
 const hash = (s: string) => {let h = 0; for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) | 0; return (h >>> 0) % 1000 / 100;};
-const easeMove = (x: number) => {const c = clamp01(x); return c < 0.15 ? (c * c) / 0.3 : c > 0.85 ? 1 - ((1 - c) * (1 - c)) / 0.3 : c - 0.075;} ;
+/** accelerate / cruise / decelerate profile for travel (normalised 0..1) */
+const easeMove = (x: number) => {const c = clamp01(x); return c < 0.18 ? (c * c) / 0.36 : c > 0.82 ? 1 - ((1 - c) * (1 - c)) / 0.36 : c - 0.09;};
 const normMove = (x: number) => easeMove(x) / easeMove(1);
-const angleLerp = (a: number, b: number, t: number) => {let d = ((b - a + 540) % 360) - 180; return a + d * t;};
+const moveSpeed = (x: number) => {const c = clamp01(x); return c < 0.18 ? c / 0.18 : c > 0.82 ? (1 - c) / 0.18 : 1;};
+const angleLerp = (a: number, b: number, t: number) => {const d = ((b - a + 540) % 360) - 180; return a + d * t;};
 
 /** Evaluate a character's action track at scene time t (seconds). Pure. */
 export function evaluateCharacter(ch: SceneCharacter, t: number, sceneDuration: number): CharacterFrame {
@@ -157,7 +201,6 @@ export function evaluateCharacter(ch: SceneCharacter, t: number, sceneDuration: 
   const cues = [...ch.track].sort((a, b) => a.start - b.start);
   let pos: Vec3 = [...ch.position] as Vec3;
   let facing = ch.facing;
-  let prevFacing = facing;
   let result: CharacterFrame | null = null;
   let prevPose: Pose | null = null;
 
@@ -169,27 +212,36 @@ export function evaluateCharacter(ch: SceneCharacter, t: number, sceneDuration: 
     const to = cue.to ?? from;
     const dist = Math.hypot(to[0] - from[0], to[2] - from[2]);
     const moveYaw = dist > 0.01 ? (Math.atan2(to[0] - from[0], to[2] - from[2]) * 180) / Math.PI : null;
+    const startFacing = facing;
     const targetFacing = cue.facing ?? moveYaw ?? facing;
     const evalAt = (tt: number): {pose: Pose; p: Vec3; f: number} => {
       const local = Math.max(0, tt - cue.start);
-      const k = normMove(local / dur);
+      const x = local / dur;
+      const k = normMove(x);
       const p: Vec3 = [lerp(from[0], to[0], k), lerp(from[1], to[1], k), lerp(from[2], to[2], k)];
-      const travel = LOCOMOTION.has(cue.action) && dist > 0.01 ? dist * k : 0;
-      const pose = ACTION_FNS[cue.action](local * cue.speed, {intensity: cue.intensity, travel, seed});
-      const f = angleLerp(prevFacing, targetFacing, smooth(local / 0.3));
-      return {pose, p, f};
+      const moving = LOCOMOTION.has(cue.action) && dist > 0.01;
+      const travel = moving ? dist * k : 0;
+      const speed = moving ? moveSpeed(x) : 0;
+      const accel = moving ? (x < 0.18 ? 1 - x / 0.18 : x > 0.82 ? -(x - 0.82) / 0.18 : 0) : 0;
+      const pose = ACTION_FNS[cue.action](local * cue.speed, {intensity: cue.intensity, travel, seed, speed, accel});
+      // turn the body over 0.35s, head leads slightly (anticipation)
+      const f = angleLerp(startFacing, targetFacing, smooth(local / 0.35));
+      const headLead = ((angleLerp(startFacing, targetFacing, smooth(local / 0.2)) - f) * Math.PI) / 180;
+      return {pose: {...pose, headYaw: pose.headYaw + headLead}, p, f};
     };
     if (t < end || i === cues.length - 1) {
       const cur = evalAt(t);
       let pose = cur.pose;
       const local = t - cue.start;
       if (prevPose && local < BLEND) pose = blendPose(prevPose, pose, smooth(local / BLEND));
+      const reachW = cue.reach ? smooth(local / 0.35) : 0;
       result = {pose, position: cur.p, facing: cur.f, expression: cue.expression ?? ch.expression,
-        talking: cue.action === 'talk' || cue.action === 'argue', prop: cue.prop, action: cue.action};
+        talking: cue.action === 'talk' || cue.action === 'argue' || cue.action === 'laugh', prop: cue.prop, action: cue.action,
+        reach: cue.reach ? {...cue.reach, weight: reachW} : undefined, lookAt: cue.target};
       break;
     }
     const done = evalAt(end);
-    prevPose = done.pose; pos = to; facing = targetFacing; prevFacing = targetFacing;
+    prevPose = done.pose; pos = to; facing = targetFacing;
   }
   return result!;
 }

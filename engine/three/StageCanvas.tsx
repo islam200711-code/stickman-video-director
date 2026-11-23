@@ -3,7 +3,7 @@ import React from 'react';
 import {useThree} from '@react-three/fiber';
 import {ThreeCanvas} from '@remotion/three';
 import {useCurrentFrame, useVideoConfig} from 'remotion';
-import type * as THREE from 'three';
+import * as THREE from 'three';
 import type {CharacterProfile, Scene} from '../schema/scene';
 import {evaluateCharacter, smooth} from '../animations/library';
 import {Stickman} from './Stickman';
@@ -42,7 +42,7 @@ export const StageCanvas: React.FC<{scene: Scene; cast: Record<string, Character
   const {fps, width, height} = useVideoConfig();
   const t = frame / fps;
   return (
-    <ThreeCanvas width={width} height={height} shadows flat gl={{antialias: true, preserveDrawingBuffer: true}} camera={{fov: 40, near: 0.1, far: 200, position: [0, 1.5, 8]}}>
+    <ThreeCanvas width={width} height={height} shadows="soft" gl={{antialias: true, preserveDrawingBuffer: true, toneMapping: THREE.NeutralToneMapping, toneMappingExposure: 1.05}} camera={{fov: 40, near: 0.1, far: 200, position: [0, 1.5, 8]}}>
       <CameraDriver scene={scene} t={t} />
       <EnvironmentView preset={scene.environment.preset} palette={scene.environment.palette} timeOfDay={scene.environment.timeOfDay} />
       {scene.props.filter((p) => p.appearAt === undefined || t >= p.appearAt).map((p, i) => (

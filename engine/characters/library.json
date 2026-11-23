@@ -1,10 +1,11 @@
 {
-  "_doc": "Reusable stickman cast. Proportions are fixed by animations/library.ts PROPORTIONS; only colour, accessory, build and scale vary. Add characters here or per-video in VideoSpec.cast.",
+  "_doc": "Style C reusable cast. Proportions are locked by animations/library.ts PROPORTIONS; only colour, accessory, build and scale vary. Body colours are mid-saturation so they read on light AND dark sets; heads share one warm off-white so faces stay readable. See docs/STYLE_GUIDE.md.",
   "characters": [
-    {"id": "sam",   "name": "Sam",   "color": "#1f2a44", "headColor": "#fdfdfb", "accent": "#2f7de1", "accessory": "scarf",  "build": "standard"},
-    {"id": "riley", "name": "Riley", "color": "#3b1f1f", "headColor": "#fdfdfb", "accent": "#f08a24", "accessory": "cap",    "build": "slim"},
-    {"id": "max",   "name": "Max",   "color": "#1d2b1d", "headColor": "#fdfdfb", "accent": "#3fa34d", "accessory": "tie",    "build": "sturdy", "scale": 1.08},
-    {"id": "jo",    "name": "Jo",    "color": "#2b1d33", "headColor": "#fdfdfb", "accent": "#c04bd6", "accessory": "bow",    "build": "slim",   "scale": 0.95},
-    {"id": "dev",   "name": "Dev",   "color": "#222222", "headColor": "#fdfdfb", "accent": "#e2c044", "accessory": "glasses","build": "standard"}
+    {"id": "sam",   "name": "Sam",   "color": "#2f6fdc", "headColor": "#fbf6ee", "accent": "#ffcf3a", "accessory": "scarf",   "build": "standard"},
+    {"id": "riley", "name": "Riley", "color": "#ef7a2c", "headColor": "#fbf6ee", "accent": "#2c3e66", "accessory": "cap",     "build": "slim"},
+    {"id": "max",   "name": "Max",   "color": "#2fa463", "headColor": "#fbf6ee", "accent": "#d23b3b", "accessory": "tie",     "build": "sturdy", "scale": 1.06},
+    {"id": "jo",    "name": "Jo",    "color": "#a24fd6", "headColor": "#fbf6ee", "accent": "#ff6fa5", "accessory": "bow",     "build": "slim",   "scale": 0.95},
+    {"id": "dev",   "name": "Dev",   "color": "#d84545", "headColor": "#fbf6ee", "accent": "#2b2b33", "accessory": "glasses", "build": "standard"},
+    {"id": "ash",   "name": "Ash",   "color": "#3d4250", "headColor": "#fbf6ee", "accent": "#42c6c6", "accessory": "none",    "build": "standard"}
   ]
 }

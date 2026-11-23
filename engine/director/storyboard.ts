@@ -29,13 +29,17 @@ export const Beat = z.object({
   speed: z.number().positive().optional(),
   intensity: z.number().optional(),
   prop: z.string().optional(),
+  reach: z.object({left: Vec3.optional(), right: Vec3.optional()}).optional(), // IK hand targets, world space
+  lookAt: Vec3.optional(),
 });
 
 export const ShotCamera = z.object({
-  shot: z.enum(['establishing', 'wide', 'medium', 'close', 'low', 'high', 'two-shot']).default('medium'),
+  shot: z.enum(['establishing', 'wide', 'medium', 'close', 'extreme-close', 'low', 'high', 'two-shot', 'over-shoulder']).default('medium'),
   move: z.enum(['static', 'push-in', 'pull-out', 'pan-left', 'pan-right', 'track', 'orbit', 'crane-up']).default('static'),
   focus: z.union([z.string(), Vec3, z.array(z.string())]).optional(), // character id(s) or a point
-  angle: z.number().default(0),         // yaw around focus in degrees (0 = from front)
+  angle: z.number().default(0),
+  from: z.string().optional(),          // over-shoulder: whose shoulder (focus = who we look at)
+  fov: z.number().optional(),           // override the lens         // yaw around focus in degrees (0 = from front)
   shake: z.number().default(0),
 });
 

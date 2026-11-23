@@ -14,7 +14,9 @@
     "produce": "tsx scripts/sve.ts produce",
     "action-sheet": "node scripts/action-sheet.mjs",
     "typecheck": "tsc -p .",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "benchmark": "bash scripts/benchmark.sh",
+    "stills": "tsx scripts/stills.ts"
   },
   "dependencies": {
     "@react-three/fiber": "^8.17.10",

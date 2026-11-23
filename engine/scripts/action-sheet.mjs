@@ -2,13 +2,13 @@
 import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 const t = Number(process.argv[2] ?? 0.6);
-const acts = ['idle','walk','run','jump','fall','sit','stand','talk','point','think','surprised','celebrate','argue','fight','escape','work','computer','hold','wave','shrug','facepalm','thumbsup','lying','push'];
+const acts = ['idle','walk','run','jump','fall','sit','stand','talk','point','think','surprised','celebrate','argue','fight','escape','work','computer','hold','wave','shrug','facepalm','thumbsup','lying','push','reach','clap','nod','headshake','crouch','laugh'];
 const ids = ['sam','riley','max','jo','dev'];
 fs.mkdirSync('out', {recursive: true});
 const rows = [];
 for (let r = 0; r * 6 < acts.length; r++) {
   const chunk = acts.slice(r * 6, r * 6 + 6);
-  const characters = chunk.map((a, i) => ({id: 'c' + i, profile: ids[(r * 6 + i) % 5], label: a, position: [(i - 2.5) * 1.75, 0, 0], facing: a === 'walk' || a === 'run' || a === 'escape' ? 60 : 20,
+  const characters = chunk.map((a, i) => ({id: 'c' + i, profile: ids[(r * 6 + i) % 5], label: a, position: [(i - 2.5) * 1.75, 0, 0], facing: a === 'walk' || a === 'run' || a === 'escape' ? 60 : 20, expression: ['happy','excited','surprised','thinking','determined','smug'][i],
     track: [{action: a, start: 0, prop: a === 'hold' ? 'coffee' : undefined}]}));
   const spec = {id: 'sheet', title: 'sheet', cast: [], captions: false, scenes: [{id: 'row', duration: 3, environment: {preset: 'studio'}, characters,
     camera: {keys: [{t: 0, position: [0, 1.6, 9.5], lookAt: [0, 1.0, 0], fov: 40}]}}]};

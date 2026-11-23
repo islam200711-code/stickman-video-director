@@ -14,12 +14,12 @@ export type Vec3 = z.infer<typeof Vec3>;
 export const ACTIONS = [
   'idle', 'walk', 'run', 'jump', 'fall', 'sit', 'stand', 'talk', 'point', 'think',
   'surprised', 'celebrate', 'argue', 'fight', 'escape', 'work', 'computer', 'hold',
-  'wave', 'shrug', 'facepalm', 'thumbsup', 'lying', 'push',
+  'wave', 'shrug', 'facepalm', 'thumbsup', 'lying', 'push', 'reach', 'clap', 'nod', 'headshake', 'crouch', 'laugh',
 ] as const;
 export const Action = z.enum(ACTIONS);
 export type Action = z.infer<typeof Action>;
 
-export const EXPRESSIONS = ['neutral', 'happy', 'sad', 'angry', 'surprised', 'thinking', 'worried', 'determined'] as const;
+export const EXPRESSIONS = ['neutral', 'happy', 'sad', 'angry', 'surprised', 'thinking', 'worried', 'determined', 'excited', 'scared', 'confused', 'smug'] as const;
 export const Expression = z.enum(EXPRESSIONS);
 export type Expression = z.infer<typeof Expression>;
 
@@ -33,7 +33,8 @@ export const ActionCue = z.object({
   expression: Expression.optional(),
   facing: z.number().optional(),       // yaw in degrees, 0 = towards camera, 90 = screen right
   to: Vec3.optional(),                 // locomotion target; position is eased start -> to
-  target: Vec3.optional(),             // point / look target
+  target: Vec3.optional(),             // point / look target (world space)
+  reach: z.object({left: Vec3.optional(), right: Vec3.optional()}).optional(), // IK hand targets (world space)
   prop: z.string().optional(),         // prop held in right hand
 });
 export type ActionCue = z.infer<typeof ActionCue>;
