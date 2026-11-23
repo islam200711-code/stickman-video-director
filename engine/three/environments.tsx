@@ -259,9 +259,11 @@ export const ENVIRONMENTS: Record<string, EnvDef> = {
       <Tank p={[-12, 0, -10]} r={1.6} h={7} color="#7b8590" />
       <Tank p={[-15.5, 0, -11]} r={1.3} h={6} color="#7b8590" />
       <Antenna p={[8.5, 0, -8]} h={11} />
-      <ChainFence p={[0, 0, -4.5]} length={14} />
-      <ChainFence p={[-11, 0, -4.5]} length={5} />
-      <ChainFence p={[11, 0, -4.5]} length={5} />
+      {/* fence with an open gate in front of the warehouse door (x -2.4..2.4) */}
+      <ChainFence p={[-6.2, 0, -4.5]} length={7.6} />
+      <ChainFence p={[6.2, 0, -4.5]} length={7.6} />
+      {[-2.4, 2.4].map((x) => <mesh key={x} position={[x, 1.25, -4.5]} material={mat('#f2c230', {rough: 0.6})} castShadow><boxGeometry args={[0.14, 2.5, 0.14]} /></mesh>)}
+      <group position={[-2.35, 0, -4.5]} rotation={[0, -1.2, 0]}><ChainFence p={[1.2, 0, 0]} length={2.4} /></group>
       <Floodlight p={[-6, 0, -5]} on={tod !== 'day'} />
       <Floodlight p={[6.5, 0, -5]} on={tod !== 'day'} r={-0.2} />
       <Scatter kind="pebble" count={60} x={[-14, 14]} z={[-4, 5]} seed={44} color="#5a5f64" />
