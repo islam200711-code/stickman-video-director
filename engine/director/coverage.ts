@@ -112,8 +112,12 @@ function frameShot(p: PlannedShot, chars: SceneCharacter[], t0: number, t1: numb
       case 'close': case 'extreme-close': {
         // eye-line match: rotate the single toward the partner the subject is facing
         const others = chars.filter((c) => !p.subject.includes(c.id));
-        let yaw = frontYaw;
-        if (others.length) {const o = pos(others[0].id, t); yaw += Math.sign((o[0] - f[0]) * Math.cos(frontYaw) - (o[2] - f[2]) * Math.sin(frontYaw)) * 0.35;}
+        // see the face: orbit toward where the subject faces (3/4 view), then a little toward the partner (eye-line)
+        const subj = chars.find((c) => c.id === p.subject[0])!;
+        const faceYaw = (evaluateCharacter(subj, t, dur).facing * Math.PI) / 180;
+        const dYaw = Math.atan2(Math.sin(faceYaw - frontYaw), Math.cos(faceYaw - frontYaw));
+        let yaw = frontYaw + Math.max(-1.0, Math.min(1.0, dYaw * 0.6));
+        if (others.length) {const o = pos(others[0].id, t); yaw += Math.sign((o[0] - f[0]) * Math.cos(frontYaw) - (o[2] - f[2]) * Math.sin(frontYaw)) * 0.12;}
         const d = (p.type === 'close' ? 2.4 : 1.5) - drift * (p.type === 'close' ? 0.3 : 0.25);
         // rule of thirds + lead room: subject on the third away from their partner/gaze
         let side = 0;
