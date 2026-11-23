@@ -36,6 +36,7 @@ export function detectEvents(shot: Shot, scale: number): Event[] {
     else if (b.expression && STRONG.has(b.expression) && !CHOREO.has(b.do)) ev.push({t, kind: 'reaction', who: b.who, priority: PRIORITY.reaction});
     else if ((b.do === 'walk' || b.do === 'run' || b.do === 'escape') && b.to) ev.push({t, kind: 'enter', who: b.who, priority: PRIORITY.enter});
   }
+  for (const c of shot.cameraImpacts ?? []) if (c.strength >= 1.2) ev.push({t: c.at * scale, kind: 'impact', priority: PRIORITY.impact});
   for (const p of shot.props) {
     if (p.move?.weight === 'heavy') ev.push({t: p.move.start * scale, kind: 'impact', priority: PRIORITY.impact});
     if (p.move?.weight === 'drop') ev.push({t: p.move.end * scale, kind: 'impact', priority: PRIORITY.impact});
@@ -82,6 +83,17 @@ export function planShots(shot: Shot, chars: SceneCharacter[], dur: number, scal
     if (prev.type === p.type && prev.subject.join() === p.subject.join() && prev.from === p.from) continue; // no jump cut to the same framing
     plan.push(p);
   }
+  // max hold: a wide/establishing frame never sits longer than ~3.2 s — insert coverage (track a mover, else a two-shot)
+  const MAX_HOLD = 3.2;
+  for (let i = 0; i < plan.length; i++) {
+    const p = plan[i], next = plan[i + 1]?.t ?? dur;
+    if ((p.type === 'establishing' || p.type === 'wide') && !p.label.startsWith('impact') && next - p.t > MAX_HOLD + MIN_HOLD) {
+      const t = p.t + MAX_HOLD;
+      if (plan.some((q) => Math.abs(q.t - t) < MIN_HOLD)) continue;
+      const mover = shot.beats.find((b) => ['walk', 'run', 'escape'].includes(b.do) && b.to && b.at * scale <= t && (b.until ?? Infinity) * scale > t + 0.8);
+      plan.splice(i + 1, 0, mover ? {t, type: 'wide', subject: [mover.who], label: `enter:WS track ${mover.who} (max hold)`} : {t, type: 'two-shot', subject: ids, label: 'cover:2S all (max hold)'});
+    }
+  }
   // text needs room: a close/ECU that would play under a title is widened to a medium/two-shot
   const titles = shot.text.filter((x) => x.style === 'title').map((x) => [x.at * scale, (x.until ?? x.at + 2.5) * scale]);
   plan.forEach((p, i) => {
@@ -97,7 +109,7 @@ export function planShots(shot: Shot, chars: SceneCharacter[], dur: number, scal
 function frameShot(p: PlannedShot, chars: SceneCharacter[], t0: number, t1: number, dur: number, frontYaw: number) {
   const pos = (id: string, t: number) => {const c = chars.find((x) => x.id === id)!; return evaluateCharacter(c, t, dur).position;};
   // average the head over the shot so a hop or lean doesn't throw the framing
-  const head = (id: string): Vec3 => {const c = chars.find((x) => x.id === id)!; const n = 5; const acc = [0, 0, 0]; for (let i = 0; i < n; i++) {const h = headWorld(c, t0 + ((t1 - t0) * i) / (n - 1), dur); acc[0] += h[0] / n; acc[1] += h[1] / n; acc[2] += h[2] / n;} return acc as Vec3;};
+  const head = (id: string): Vec3 => {const c = chars.find((x) => x.id === id)!; if (p.type === 'extreme-close') return headWorld(c, t1, dur); const n = 5; const acc = [0, 0, 0]; for (let i = 0; i < n; i++) {const h = headWorld(c, t0 + ((t1 - t0) * i) / (n - 1), dur); acc[0] += h[0] / n; acc[1] += h[1] / n; acc[2] += h[2] / n;} return acc as Vec3;};
   const centroid = (t: number): Vec3 => {
     const pts = p.subject.map((id) => pos(id, t));
     return [pts.reduce((a, q) => a + q[0], 0) / pts.length, 0, pts.reduce((a, q) => a + q[2], 0) / pts.length];

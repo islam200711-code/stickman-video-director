@@ -84,7 +84,12 @@ export const Hud: React.FC<{scene: Scene}> = ({scene}) => {
       }
       case 'alert': {
         const pulse = 0.5 + 0.5 * Math.sin(lt * 10); const c = e.color ?? '#ff3b3b';
-        out.push(<AbsoluteFill key={i} style={{opacity: o, alignItems: 'center', justifyContent: 'center'}}>
+        // the modal obeys head safe zones: centre if clear, else the top or bottom band
+        const heads = protectedRects(scene, e.at + 0.3, w, h).filter((r) => r.kind === 'head');
+        const bandHit = (y0: number, y1: number) => heads.reduce((a, r) => a + Math.max(0, Math.min(r.y1, y1) - Math.max(r.y0, y0)) * Math.max(0, Math.min(r.x1, w * 0.72) - Math.max(r.x0, w * 0.28)), 0);
+        const bands = [[h * 0.36, h * 0.64, 'center'], [h * 0.06, h * 0.34, 'flex-start'], [h * 0.66, h * 0.94, 'flex-end']] as const;
+        const band = [...bands].sort((a, b2) => bandHit(a[0], a[1]) - bandHit(b2[0], b2[1]))[0];
+        out.push(<AbsoluteFill key={i} style={{opacity: o, alignItems: 'center', justifyContent: band[2], padding: `${h * 0.06}px 0`}}>
           <AbsoluteFill style={{boxShadow: `inset 0 0 ${120 * u}px ${c}${Math.round(80 + pulse * 100).toString(16)}`}} />
           <div style={{background: 'rgba(20,4,6,0.9)', border: `${4 * u}px solid ${c}`, color: c, fontFamily: MONO, padding: `${18 * u}px ${34 * u}px`, textAlign: 'center', transform: `scale(${0.9 + 0.1 * clamp(lt * 5)})`}}>
             <div style={{fontSize: 56 * u, lineHeight: 1}}>⚠</div>

@@ -1,0 +1,1086 @@
+{
+ "id": "the-last-signal",
+ "title": "THE LAST SIGNAL",
+ "brief": {
+  "category": "engine-test (original short, neutral)",
+  "topic": "A small team finds a mysterious signal in an abandoned facility and must escape",
+  "language": "none",
+  "tone": "tense, cinematic",
+  "targetDuration": 60,
+  "fps": 24
+ },
+ "cast": [
+  "sam",
+  "riley",
+  "jo",
+  {
+   "id": "ash",
+   "name": "Ash",
+   "color": "#30343c",
+   "headColor": "#e8eef2",
+   "accent": "#42c6c6",
+   "accessory": "glasses",
+   "build": "sturdy",
+   "scale": 1.08
+  }
+ ],
+ "voice": {
+  "provider": "none"
+ },
+ "music": {
+  "query": "suspense dramatic loopable",
+  "volume": 0.32
+ },
+ "captions": false,
+ "style": {
+  "characterMode": "flat_2d"
+ },
+ "shots": [
+  {
+   "id": "s01-approach",
+   "purpose": "establish: night facility, the team arrives",
+   "environment": "compound-night",
+   "timeOfDay": "night",
+   "look": "moody-night",
+   "duration": 6,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -6,
+      0,
+      3
+     ],
+     "facing": 60,
+     "expression": "determined"
+    },
+    "riley": {
+     "at": [
+      -7,
+      0,
+      3.8
+     ],
+     "facing": 60,
+     "expression": "worried"
+    },
+    "jo": {
+     "at": [
+      -6.8,
+      0,
+      2.4
+     ],
+     "facing": 60,
+     "expression": "determined"
+    }
+   },
+   "beats": [
+    {
+     "who": "sam",
+     "do": "walk",
+     "at": 0.4,
+     "until": 4.4,
+     "to": [
+      -0.6,
+      0,
+      -5.8
+     ],
+     "event": "enter"
+    },
+    {
+     "who": "riley",
+     "do": "walk",
+     "at": 0.6,
+     "until": 4.8,
+     "to": [
+      -1.6,
+      0,
+      -5.2
+     ],
+     "prop": "phone"
+    },
+    {
+     "who": "jo",
+     "do": "walk",
+     "at": 0.5,
+     "until": 4.6,
+     "to": [
+      0.5,
+      0,
+      -5.4
+     ]
+    },
+    {
+     "who": "sam",
+     "do": "point",
+     "at": 4.6,
+     "facing": 180
+    },
+    {
+     "who": "riley",
+     "do": "hold",
+     "at": 4.8,
+     "facing": 160,
+     "prop": "phone"
+    }
+   ],
+   "text": [
+    {
+     "text": "THE LAST SIGNAL",
+     "at": 0.4,
+     "until": 3.6,
+     "style": "title"
+    }
+   ],
+   "ui": [
+    {
+     "type": "status",
+     "at": 0.2,
+     "until": 6,
+     "title": "SIGNAL 3.2 GHz",
+     "anchor": "left",
+     "color": "#9fe8ff"
+    }
+   ]
+  },
+  {
+   "id": "s02-inside",
+   "purpose": "inside the hall: tension builds",
+   "environment": "industrial-hall",
+   "look": "dramatic",
+   "duration": 7,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      7,
+      0,
+      0.6
+     ],
+     "facing": -90,
+     "expression": "determined"
+    },
+    "riley": {
+     "at": [
+      8,
+      0,
+      0.2
+     ],
+     "facing": -90,
+     "expression": "worried"
+    },
+    "jo": {
+     "at": [
+      7.6,
+      0,
+      1.2
+     ],
+     "facing": -90
+    }
+   },
+   "beats": [
+    {
+     "who": "sam",
+     "do": "walk",
+     "at": 0.2,
+     "until": 3.2,
+     "to": [
+      1.2,
+      0,
+      0.6
+     ]
+    },
+    {
+     "who": "riley",
+     "do": "walk",
+     "at": 0.4,
+     "until": 3.6,
+     "to": [
+      2.4,
+      0,
+      0.1
+     ],
+     "prop": "phone"
+    },
+    {
+     "who": "jo",
+     "do": "walk",
+     "at": 0.3,
+     "until": 3.4,
+     "to": [
+      0.2,
+      0,
+      1.0
+     ]
+    },
+    {
+     "who": "jo",
+     "do": "crouch",
+     "at": 3.6,
+     "expression": "worried"
+    },
+    {
+     "who": "riley",
+     "do": "hold",
+     "at": 3.7,
+     "facing": -60,
+     "prop": "phone",
+     "expression": "thinking"
+    },
+    {
+     "who": "sam",
+     "do": "point",
+     "at": 4.2,
+     "facing": -120,
+     "expression": "determined"
+    }
+   ],
+   "ui": [
+    {
+     "type": "terminal",
+     "at": 3.8,
+     "until": 6.9,
+     "title": "SCANNER",
+     "anchor": "right",
+     "lines": [
+      "> carrier 3.2 GHz",
+      "> strength 92%",
+      "> bearing: NORTH-WEST"
+     ],
+     "color": "#9fe8ff"
+    }
+   ],
+   "transition": "cut"
+  },
+  {
+   "id": "s03-signal",
+   "purpose": "discovery: the signal is decoded, alarm",
+   "environment": "control-room",
+   "look": "interior-cool",
+   "duration": 8,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "transition": "brush",
+   "transitionDuration": 0.6,
+   "blocking": {
+    "riley": {
+     "at": [
+      -1.2,
+      0,
+      -1.25
+     ],
+     "facing": 180
+    },
+    "sam": {
+     "at": [
+      0.6,
+      0,
+      0.1
+     ],
+     "facing": -40,
+     "expression": "determined"
+    },
+    "jo": {
+     "at": [
+      -2.7,
+      0,
+      0.0
+     ],
+     "facing": 40,
+     "expression": "worried"
+    }
+   },
+   "beats": [
+    {
+     "who": "riley",
+     "do": "work",
+     "at": 0.2,
+     "until": 4.8,
+     "facing": 180,
+     "expression": "thinking"
+    },
+    {
+     "who": "sam",
+     "do": "idle",
+     "at": 0
+    },
+    {
+     "who": "jo",
+     "do": "think",
+     "at": 0.4
+    },
+    {
+     "who": "riley",
+     "do": "surprised",
+     "at": 5.0,
+     "facing": 0,
+     "expression": "surprised"
+    },
+    {
+     "who": "sam",
+     "do": "surprised",
+     "at": 6.4,
+     "expression": "scared"
+    },
+    {
+     "who": "jo",
+     "do": "guard",
+     "at": 6.5,
+     "expression": "scared"
+    }
+   ],
+   "ui": [
+    {
+     "type": "terminal",
+     "at": 0.6,
+     "until": 4.9,
+     "title": "SIGNAL TRACE",
+     "anchor": "right",
+     "lines": [
+      "> handshake relay-07",
+      "> decode carrier",
+      "> payload: 48 sources",
+      "> origin: THIS FACILITY"
+     ],
+     "stamp": "SIGNAL FOUND"
+    },
+    {
+     "type": "glitch",
+     "at": 6.1,
+     "until": 6.4
+    },
+    {
+     "type": "alert",
+     "at": 6.3,
+     "until": 7.9,
+     "title": "INTRUDER DETECTED",
+     "text": "sentinel online"
+    }
+   ]
+  },
+  {
+   "id": "s04-sentinel",
+   "purpose": "the guardian wakes: first clash",
+   "environment": "control-room",
+   "look": "tension",
+   "duration": 7,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "blocking": {
+    "ash": {
+     "at": [
+      5.4,
+      0,
+      -1.6
+     ],
+     "facing": -90,
+     "expression": "angry"
+    },
+    "sam": {
+     "at": [
+      0.4,
+      0,
+      0.1
+     ],
+     "facing": 90,
+     "expression": "determined"
+    },
+    "jo": {
+     "at": [
+      -0.9,
+      0,
+      0.3
+     ],
+     "facing": 90,
+     "expression": "worried"
+    },
+    "riley": {
+     "at": [
+      -1.4,
+      0,
+      -1.2
+     ],
+     "facing": 60,
+     "expression": "scared"
+    }
+   },
+   "beats": [
+    {
+     "who": "ash",
+     "do": "walk",
+     "at": 0.2,
+     "until": 1.9,
+     "to": [
+      1.45,
+      0,
+      0.1
+     ]
+    }
+   ],
+   "actions": [
+    {
+     "type": "punch",
+     "at": 2.1,
+     "actor": "ash",
+     "target": "sam",
+     "outcome": "blocked"
+    },
+    {
+     "type": "punch",
+     "at": 3.3,
+     "actor": "sam",
+     "target": "ash",
+     "outcome": "hit",
+     "force": 1.1
+    },
+    {
+     "type": "push",
+     "at": 4.7,
+     "actor": "jo",
+     "target": "ash",
+     "force": 1.2
+    }
+   ]
+  },
+  {
+   "id": "s05-knockdown",
+   "purpose": "the sentinel strikes back; rescue; the console blows",
+   "environment": "control-room",
+   "look": "tension",
+   "duration": 6.5,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "blocking": {
+    "ash": {
+     "at": [
+      2.3,
+      0,
+      0.1
+     ],
+     "facing": -90,
+     "expression": "angry"
+    },
+    "sam": {
+     "at": [
+      1.35,
+      0,
+      0.1
+     ],
+     "facing": 90,
+     "expression": "determined"
+    },
+    "jo": {
+     "at": [
+      -0.6,
+      0,
+      0.5
+     ],
+     "facing": 90,
+     "expression": "worried"
+    },
+    "riley": {
+     "at": [
+      -2.8,
+      0,
+      -0.6
+     ],
+     "facing": 60,
+     "expression": "scared",
+     "label": ""
+    }
+   },
+   "actions": [
+    {
+     "type": "punch",
+     "at": 0.6,
+     "actor": "ash",
+     "target": "sam",
+     "outcome": "hit",
+     "force": 1.7,
+     "aim": "body"
+    },
+    {
+     "type": "rescue",
+     "at": 2.6,
+     "actor": "jo",
+     "target": "sam"
+    }
+   ],
+   "beats": [
+    {
+     "who": "riley",
+     "do": "crouch",
+     "at": 1.0,
+     "expression": "scared"
+    },
+    {
+     "who": "riley",
+     "do": "run",
+     "at": 4.8,
+     "until": 6.4,
+     "to": [
+      -6,
+      0,
+      1.2
+     ]
+    }
+   ],
+   "vfx": [
+    {
+     "type": "sparks",
+     "at": 4.4,
+     "position": [
+      -1.2,
+      1.3,
+      -2.3
+     ],
+     "scale": 1.4
+    },
+    {
+     "type": "color-flash",
+     "at": 4.7,
+     "color": "#ffd9a8"
+    },
+    {
+     "type": "explosion",
+     "at": 4.7,
+     "position": [
+      -1.2,
+      0.4,
+      -2.4
+     ],
+     "scale": 1.0
+    },
+    {
+     "type": "smoke",
+     "at": 5.0,
+     "position": [
+      -1.2,
+      0.4,
+      -2.4
+     ]
+    }
+   ],
+   "cameraImpacts": [
+    {
+     "at": 4.7,
+     "strength": 1.5
+    }
+   ],
+   "sfx": [
+    {
+     "sound": "impact heavy",
+     "at": 4.7,
+     "volume": 1.0,
+     "important": true
+    },
+    {
+     "sound": "impact metal",
+     "at": 4.4,
+     "volume": 0.7
+    }
+   ]
+  },
+  {
+   "id": "s06-corridor",
+   "purpose": "escape run, fire behind",
+   "environment": "corridor",
+   "look": "tension",
+   "duration": 7,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "transition": "fire",
+   "transitionDuration": 0.7,
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.6,
+      0,
+      -16
+     ],
+     "facing": 0,
+     "expression": "determined"
+    },
+    "jo": {
+     "at": [
+      0.6,
+      0,
+      -17
+     ],
+     "facing": 0,
+     "expression": "scared"
+    },
+    "riley": {
+     "at": [
+      0,
+      0,
+      -18.5
+     ],
+     "facing": 0,
+     "expression": "scared"
+    }
+   },
+   "beats": [
+    {
+     "who": "sam",
+     "do": "run",
+     "at": 0.2,
+     "until": 5.6,
+     "to": [
+      -0.6,
+      0,
+      0.5
+     ],
+     "event": "enter"
+    },
+    {
+     "who": "jo",
+     "do": "run",
+     "at": 0.3,
+     "until": 5.8,
+     "to": [
+      0.7,
+      0,
+      0.0
+     ]
+    },
+    {
+     "who": "riley",
+     "do": "escape",
+     "at": 0.4,
+     "until": 6.2,
+     "to": [
+      0.0,
+      0,
+      -0.6
+     ]
+    }
+   ],
+   "vfx": [
+    {
+     "type": "fire",
+     "at": 0,
+     "position": [
+      0,
+      0,
+      -30
+     ],
+     "scale": 2.2,
+     "duration": 7
+    },
+    {
+     "type": "explosion",
+     "at": 2.0,
+     "position": [
+      0,
+      0.5,
+      -27
+     ],
+     "scale": 1.6
+    },
+    {
+     "type": "smoke",
+     "at": 2.3,
+     "position": [
+      0,
+      0.5,
+      -27
+     ],
+     "scale": 1.6
+    }
+   ],
+   "cameraImpacts": [
+    {
+     "at": 2.0,
+     "strength": 0.9
+    }
+   ],
+   "ui": [
+    {
+     "type": "alert",
+     "at": 0.1,
+     "until": 1.6,
+     "title": "LOCKDOWN",
+     "text": "exits sealing"
+    }
+   ]
+  },
+  {
+   "id": "s07-pursuit",
+   "purpose": "the sentinel catches up: dodge, push, blast",
+   "environment": "industrial-hall",
+   "look": "dramatic",
+   "duration": 6,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "blocking": {
+    "ash": {
+     "at": [
+      -6,
+      0,
+      0.4
+     ],
+     "facing": 90,
+     "expression": "angry"
+    },
+    "jo": {
+     "at": [
+      0.2,
+      0,
+      0.4
+     ],
+     "facing": -90,
+     "expression": "determined"
+    },
+    "sam": {
+     "at": [
+      1.6,
+      0,
+      0.6
+     ],
+     "facing": -90,
+     "expression": "determined"
+    },
+    "riley": {
+     "at": [
+      4.2,
+      0,
+      0.2
+     ],
+     "facing": 90,
+     "expression": "scared"
+    }
+   },
+   "beats": [
+    {
+     "who": "ash",
+     "do": "run",
+     "at": 0.1,
+     "until": 1.1,
+     "to": [
+      -0.75,
+      0,
+      0.4
+     ]
+    },
+    {
+     "who": "riley",
+     "do": "run",
+     "at": 0.2,
+     "until": 2.5,
+     "to": [
+      8,
+      0,
+      0.4
+     ]
+    }
+   ],
+   "actions": [
+    {
+     "type": "punch",
+     "at": 1.15,
+     "actor": "ash",
+     "target": "jo",
+     "outcome": "dodged"
+    },
+    {
+     "type": "push",
+     "at": 2.6,
+     "actor": "sam",
+     "target": "ash",
+     "force": 1.6
+    }
+   ],
+   "vfx": [
+    {
+     "type": "color-flash",
+     "at": 4.0,
+     "color": "#ffe6b8"
+    },
+    {
+     "type": "explosion",
+     "at": 4.0,
+     "position": [
+      -3.2,
+      0.3,
+      -1.2
+     ],
+     "scale": 1.3
+    },
+    {
+     "type": "debris",
+     "at": 4.05,
+     "position": [
+      -3.2,
+      0.4,
+      -1.2
+     ],
+     "scale": 1.2
+    }
+   ],
+   "cameraImpacts": [
+    {
+     "at": 4.0,
+     "strength": 1.3
+    }
+   ],
+   "sfx": [
+    {
+     "sound": "impact heavy",
+     "at": 4.0,
+     "volume": 1.0,
+     "important": true
+    }
+   ]
+  },
+  {
+   "id": "s08-outside",
+   "purpose": "breakout into the night; regroup",
+   "environment": "compound-night",
+   "timeOfDay": "night",
+   "look": "moody-night",
+   "duration": 6.5,
+   "camera": {
+    "coverage": "auto",
+    "angle": 0
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -0.4,
+      0,
+      -7.4
+     ],
+     "facing": 0,
+     "expression": "determined"
+    },
+    "jo": {
+     "at": [
+      0.5,
+      0,
+      -7.6
+     ],
+     "facing": 0,
+     "expression": "scared"
+    },
+    "riley": {
+     "at": [
+      0,
+      0,
+      -7.8
+     ],
+     "facing": 0,
+     "expression": "scared"
+    }
+   },
+   "beats": [
+    {
+     "who": "sam",
+     "do": "run",
+     "at": 0.1,
+     "until": 2.6,
+     "to": [
+      -0.8,
+      0,
+      -1.6
+     ]
+    },
+    {
+     "who": "jo",
+     "do": "run",
+     "at": 0.2,
+     "until": 2.8,
+     "to": [
+      0.7,
+      0,
+      -1.8
+     ]
+    },
+    {
+     "who": "riley",
+     "do": "run",
+     "at": 0.3,
+     "until": 3.0,
+     "to": [
+      0.0,
+      0,
+      -1.0
+     ]
+    }
+   ],
+   "actions": [
+    {
+     "type": "huddle",
+     "at": 3.6,
+     "actor": "sam",
+     "group": [
+      "sam",
+      "jo",
+      "riley"
+     ]
+    }
+   ],
+   "vfx": [
+    {
+     "type": "smoke",
+     "at": 0.0,
+     "position": [
+      0,
+      1,
+      -8.6
+     ],
+     "scale": 1.4,
+     "duration": 6.5
+    }
+   ]
+  },
+  {
+   "id": "s09-hook",
+   "purpose": "ending hook: one of 48 signals; the sentinel rises",
+   "environment": "compound-night",
+   "timeOfDay": "night",
+   "look": "moody-night",
+   "duration": 6,
+   "camera": {
+    "coverage": "auto",
+    "angle": -12
+   },
+   "blocking": {
+    "riley": {
+     "at": [
+      0.2,
+      0,
+      -1.0
+     ],
+     "facing": 160,
+     "expression": "thinking"
+    },
+    "sam": {
+     "at": [
+      -0.9,
+      0,
+      -1.4
+     ],
+     "facing": 160,
+     "expression": "worried"
+    },
+    "jo": {
+     "at": [
+      1.2,
+      0,
+      -1.5
+     ],
+     "facing": 200,
+     "expression": "worried"
+    },
+    "ash": {
+     "at": [
+      3.3,
+      0,
+      -3.3
+     ],
+     "facing": -60,
+     "expression": "angry"
+    }
+   },
+   "beats": [
+    {
+     "who": "riley",
+     "do": "hold",
+     "at": 0.0,
+     "prop": "phone"
+    },
+    {
+     "who": "ash",
+     "do": "lying",
+     "at": 0.0
+    },
+    {
+     "who": "ash",
+     "do": "stand",
+     "at": 3.5,
+     "until": 4.3,
+     "event": "emphasis"
+    },
+    {
+     "who": "ash",
+     "do": "guard",
+     "at": 4.3
+    },
+    {
+     "who": "sam",
+     "do": "surprised",
+     "at": 4.8,
+     "facing": 120,
+     "expression": "scared",
+     "event": "reveal"
+    },
+    {
+     "who": "jo",
+     "do": "guard",
+     "at": 4.9,
+     "facing": 120,
+     "expression": "scared"
+    },
+    {
+     "who": "riley",
+     "do": "surprised",
+     "at": 4.95,
+     "facing": 120,
+     "expression": "scared"
+    }
+   ],
+   "ui": [
+    {
+     "type": "terminal",
+     "at": 0.3,
+     "until": 3.4,
+     "title": "SIGNAL MAP",
+     "anchor": "right",
+     "lines": [
+      "> origin confirmed",
+      "> network: 48 nodes",
+      "> this was node 1"
+     ],
+     "stamp": "47 STILL ACTIVE",
+     "color": "#ff5a5a"
+    },
+    {
+     "type": "target",
+     "at": 0.4,
+     "until": 3.3,
+     "position": [
+      8.5,
+      10.5,
+      -8
+     ],
+     "title": "ANTENNA LIVE",
+     "text": "TX 3.2 GHz"
+    }
+   ],
+   "text": [
+    {
+     "text": "SIGNAL 1 OF 48",
+     "at": 5.0,
+     "until": 6,
+     "style": "title"
+    }
+   ]
+  }
+ ]
+}

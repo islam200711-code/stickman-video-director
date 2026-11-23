@@ -1,0 +1,26 @@
+THE LAST SIGNAL
+
+Audio credits:
+- Footstep Concrete 000 (kenney-impact-footstep-concrete-000) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Tick 002 (kenney-interface-tick-002) — Interface Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Maximize 002 (kenney-interface-maximize-002) — Interface Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Confirmation 002 (kenney-interface-confirmation-002) — Interface Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Glitch 002 (kenney-interface-glitch-002) — Interface Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Error 003 (kenney-interface-error-003) — Interface Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Impact Wood Heavy 001 (kenney-impact-impact-wood-heavy-001) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Swish 1 (artisticdude-swishes-swish-1) — Swishes Sound Pack — artisticdude (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Impact Punch Heavy 001 (kenney-impact-impact-punch-heavy-001) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Impact Punch Heavy 000 (kenney-impact-impact-punch-heavy-000) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Impact Metal Heavy 001 (kenney-impact-impact-metal-heavy-001) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Impact Wood Heavy 000 (kenney-impact-impact-wood-heavy-000) — Impact Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Cloth1 (kenney-rpg-cloth1) — RPG Audio — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- applause clapping church crowd immersive (expl0it3r-applause-applause-clapping-church-crowd-immersive) — Applause in a large hall or church - eXpl0it3r (https://opengameart.org/content/applause-in-a-large-hall-or-church), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged. — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Select 003 (kenney-interface-select-003) — Interface Sounds — Kenney (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Amb Outdoor1 Loop (kresiek-amb-outside-amb-outdoor1-loop) — AMB Outside 1 — Kresiek The Furry (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- sfx100v2 loop construction site (rubberduck-general-100-2-sfx100v2-loop-construction-site) — 100 CC0 SFX #2 - rubberduck (https://opengameart.org/content/100-cc0-sfx-2), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged. — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- sfx100v2 loop machine 02 (rubberduck-general-100-2-sfx100v2-loop-machine-02) — 100 CC0 SFX #2 - rubberduck (https://opengameart.org/content/100-cc0-sfx-2), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged. — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
+- Decisions (bgm-decisions) — "Decisions" Kevin MacLeod (incompetech.com)
+Licensed under Creative Commons: By Attribution 4.0 License
+http://creativecommons.org/licenses/by/4.0/
+Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100756
+Library copy: original MP3 unchanged. In a finished video, disclose actual edits/synchronization. — CC-BY-4.0 https://creativecommons.org/licenses/by/4.0/. Changes: converted to WAV, timed to picture, volume reduced, trimmed/faded to video length.
