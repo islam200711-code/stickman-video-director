@@ -1,0 +1,265 @@
+{
+ "id": "ui-lab",
+ "title": "UI lab",
+ "brief": {
+  "category": "engine-test",
+  "topic": "ui test",
+  "fps": 24
+ },
+ "cast": [
+  "sam",
+  "riley",
+  "max"
+ ],
+ "voice": {
+  "provider": "none"
+ },
+ "captions": false,
+ "style": {
+  "characterMode": "flat_2d"
+ },
+ "shots": [
+  {
+   "id": "u1-news",
+   "environment": "street",
+   "duration": 4,
+   "camera": {
+    "shot": "wide",
+    "focus": [
+     0,
+     0,
+     0
+    ]
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -1,
+      0,
+      0.3
+     ],
+     "facing": 30
+    },
+    "riley": {
+     "at": [
+      1.2,
+      0,
+      0
+     ],
+     "facing": -30
+    }
+   },
+   "ui": [
+    {
+     "type": "news",
+     "at": 0.2,
+     "until": 3.9,
+     "title": "STRANGE SIGNAL DETECTED OVER CITY",
+     "lines": [
+      "Residents report flickering lights",
+      "Experts urge calm",
+      "Story developing"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "u2-terminal",
+   "environment": "office",
+   "duration": 5,
+   "camera": {
+    "shot": "medium",
+    "focus": "sam"
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      0,
+      0,
+      0.4
+     ],
+     "facing": 0,
+     "expression": "thinking"
+    }
+   },
+   "ui": [
+    {
+     "type": "terminal",
+     "at": 0.2,
+     "until": 4.9,
+     "title": "SIGNAL TRACE v2",
+     "anchor": "right",
+     "lines": [
+      "> connect relay-07",
+      "> decode carrier 3.2 GHz",
+      "> triangulating source...",
+      "> match: SECTOR 9"
+     ],
+     "stamp": "SIGNAL FOUND"
+    },
+    {
+     "type": "status",
+     "at": 0,
+     "until": 5,
+     "title": "REC",
+     "anchor": "left"
+    }
+   ]
+  },
+  {
+   "id": "u3-alert-target",
+   "environment": "park",
+   "duration": 5,
+   "camera": {
+    "shot": "wide",
+    "focus": [
+     0,
+     0,
+     0
+    ]
+   },
+   "blocking": {
+    "sam": {
+     "at": [
+      -1,
+      0,
+      0.3
+     ],
+     "facing": 30
+    },
+    "riley": {
+     "at": [
+      1.2,
+      0,
+      0
+     ],
+     "facing": -30
+    }
+   },
+   "beats": [
+    {
+     "who": "riley",
+     "do": "walk",
+     "at": 0.3,
+     "until": 3.5,
+     "to": [
+      3.2,
+      0,
+      0.3
+     ]
+    }
+   ],
+   "ui": [
+    {
+     "type": "target",
+     "at": 0.4,
+     "until": 4.8,
+     "target": "riley",
+     "title": "TARGET LOCKED"
+    },
+    {
+     "type": "alert",
+     "at": 3.2,
+     "until": 4.9,
+     "title": "INTRUDER",
+     "text": "perimeter breached"
+    }
+   ]
+  },
+  {
+   "id": "u4-call-map",
+   "environment": "living-room",
+   "duration": 5,
+   "camera": {
+    "shot": "medium",
+    "focus": "riley"
+   },
+   "blocking": {
+    "riley": {
+     "at": [
+      0,
+      0,
+      0.6
+     ],
+     "facing": 0,
+     "expression": "happy"
+    }
+   },
+   "beats": [
+    {
+     "who": "riley",
+     "do": "talk",
+     "at": 0.5,
+     "until": 4.5
+    }
+   ],
+   "ui": [
+    {
+     "type": "videocall",
+     "at": 0,
+     "until": 5,
+     "title": "Riley",
+     "text": "You"
+    },
+    {
+     "type": "map",
+     "at": 1.0,
+     "until": 5,
+     "title": "TO SECTOR 9",
+     "anchor": "corner"
+    }
+   ]
+  },
+  {
+   "id": "u5-scope-bino-fish",
+   "environment": "cliff",
+   "duration": 6,
+   "camera": {
+    "shot": "wide",
+    "focus": [
+     0,
+     0,
+     -1
+    ]
+   },
+   "blocking": {
+    "max": {
+     "at": [
+      0,
+      0,
+      -1
+     ],
+     "facing": 0
+    }
+   },
+   "ui": [
+    {
+     "type": "scope",
+     "at": 0,
+     "until": 2
+    },
+    {
+     "type": "binocular",
+     "at": 2,
+     "until": 4
+    },
+    {
+     "type": "fisheye",
+     "at": 4,
+     "until": 6,
+     "title": "CAM 04"
+    },
+    {
+     "type": "glitch",
+     "at": 1.8,
+     "until": 2.2
+    },
+    {
+     "type": "scanwipe",
+     "at": 3.6,
+     "until": 4.1
+    }
+   ]
+  }
+ ]
+}

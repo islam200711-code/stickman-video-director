@@ -152,6 +152,7 @@ export function storyboardToSpec(input: StoryboardInput, assets: Assets): AdaptR
     }
     camera.impacts = [...(camera.impacts ?? []), ...shot.cameraImpacts.map((c) => ({t: round(c.at * scale), strength: c.strength}))];
     return {
+      ui: shot.ui.map((u) => ({...u, at: round(u.at * scale), until: u.until !== undefined ? round(u.until * scale) : undefined})),
       vfx: shot.vfx.map((v) => ({...v, at: round(v.at * scale), duration: v.duration !== undefined ? v.duration * scale : undefined})),
       look: shot.look, characterMode: shot.characterMode,
       id: shot.id, duration: dur,

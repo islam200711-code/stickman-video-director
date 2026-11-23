@@ -85,6 +85,17 @@ export const Shot = z.object({
   /** choreographed interactions — expanded by choreography/director.ts into beats, VFX, SFX and camera impacts */
   actions: z.array(ActionEvent).default([]),
   vfx: z.array(z.object({type: z.string(), at: z.number(), position: Vec3.optional(), dir: Vec3.optional(), scale: z.number().default(1), color: z.string().optional(), duration: z.number().optional(), actor: z.string().optional()})).default([]),
+  ui: z.array(z.object({
+    type: z.enum(['news', 'terminal', 'alert', 'target', 'videocall', 'map', 'scope', 'binocular', 'fisheye', 'glitch', 'scanwipe', 'status']),
+    at: z.number(), until: z.number().optional(),
+    title: z.string().optional(), text: z.string().optional(), lines: z.array(z.string()).optional(),
+    stamp: z.string().optional(),            // terminal: status stamp after typing (e.g. "SIGNAL FOUND")
+    color: z.string().optional(),
+    target: z.string().optional(),            // character id to track (target display)
+    position: Vec3.optional(),                // world point to track (target display)
+    route: z.array(z.tuple([z.number(), z.number()])).optional(), // map: normalised 0..1 points
+    anchor: z.enum(['full', 'left', 'right', 'center', 'corner']).default('center'),
+  })).default([]),
   cameraImpacts: z.array(z.object({at: z.number(), strength: z.number().default(1)})).default([]),
   transition: z.enum(['cut', 'fade', 'slide', 'wipe', 'brush', 'fire', 'blink']).default('cut'),
   transitionDuration: z.number().default(0.5),

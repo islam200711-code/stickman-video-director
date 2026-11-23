@@ -126,6 +126,18 @@ export const Scene = z.object({
   narration: Narration.optional(),
   sfx: z.array(SfxCue).default([]),
   transitionIn: Transition.default({type: 'cut', duration: 0}),
+  /** screen graphics / HUD events (rendered by ui/Hud.tsx), times in scene seconds */
+  ui: z.array(z.object({
+    type: z.enum(['news', 'terminal', 'alert', 'target', 'videocall', 'map', 'scope', 'binocular', 'fisheye', 'glitch', 'scanwipe', 'status']),
+    at: z.number(), until: z.number().optional(),
+    title: z.string().optional(), text: z.string().optional(), lines: z.array(z.string()).optional(),
+    stamp: z.string().optional(),            // terminal: status stamp after typing (e.g. "SIGNAL FOUND")
+    color: z.string().optional(),
+    target: z.string().optional(),            // character id to track (target display)
+    position: Vec3.optional(),                // world point to track (target display)
+    route: z.array(z.tuple([z.number(), z.number()])).optional(), // map: normalised 0..1 points
+    anchor: z.enum(['full', 'left', 'right', 'center', 'corner']).default('center'),
+  })).default([]),
   /** event-driven visual effects (rendered by vfx/), times in scene seconds */
   vfx: z.array(z.object({type: z.string(), at: z.number(), position: Vec3.optional(), dir: Vec3.optional(), scale: z.number().default(1), color: z.string().optional(), duration: z.number().optional(), actor: z.string().optional()})).default([]),
   look: z.string().default('natural'),  // lighting + depth + grade preset (three/looks.ts)

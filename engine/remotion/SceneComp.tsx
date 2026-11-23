@@ -5,6 +5,7 @@ import {StageCanvas} from '../three/StageCanvas';
 import {getLook} from '../three/looks';
 import {SceneOverlays} from './Overlays';
 import {Effects2D} from '../vfx/Effects2D';
+import {Hud} from '../ui/Hud';
 
 /** Cheap 2D grade from the scene look: CSS saturate/contrast on the 3D layer, tint + vignette on top. Text is not graded. */
 const Grade: React.FC<{look: string; children: React.ReactNode}> = ({look, children}) => {
@@ -24,6 +25,7 @@ export const SceneComp: React.FC<{scene: Scene; spec: VideoSpec; cast: Record<st
     <AbsoluteFill style={{backgroundColor: '#000'}}>
       <Grade look={scene.look}><StageCanvas scene={scene} cast={cast} lineWidth={spec.style.lineWidth} characterMode={spec.style.characterMode} render={spec.format.render} /></Grade>
       <Effects2D scene={scene} />
+      <Hud scene={scene} />
       <SceneOverlays scene={scene} style={spec.style} captions={spec.captions} />
       {scene.narration?.audio && (
         <Sequence from={Math.round(scene.narration.start * fps)} layout="none"><Audio src={staticFile(scene.narration.audio)} /></Sequence>

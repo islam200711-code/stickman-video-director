@@ -15,7 +15,7 @@ type Ev = Scene['vfx'][number];
 export const EFFECT_LIFE_2D: Record<string, number> = {'impact-flash': 0.13, 'ink-burst': 0.32, 'impact-frame': 0.09, 'color-flash': 0.05};
 
 const cam = new THREE.PerspectiveCamera();
-function project(scene: Scene, t: number, p: [number, number, number], w: number, h: number) {
+export function project(scene: Scene, t: number, p: [number, number, number], w: number, h: number) {
   const c = cameraAt(scene.camera, t);
   cam.fov = c.fov; cam.aspect = w / h; cam.near = 0.1; cam.far = 300; cam.position.set(...c.position); cam.lookAt(...c.lookAt); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
   const v = new THREE.Vector3(...p).project(cam);
