@@ -17,8 +17,13 @@
   "jo"
  ],
  "voice": {
-  "provider": "espeak",
-  "rate": 200
+  "provider": "files",
+  "files": {
+   "s1-hook": "voice/s1.wav",
+   "s2-ghost-army": "voice/s2.wav",
+   "s3-twist": "voice/s3.wav",
+   "s4-cta": "voice/s4.wav"
+  }
  },
  "music": {
   "query": "sneaking mysterious comedy",

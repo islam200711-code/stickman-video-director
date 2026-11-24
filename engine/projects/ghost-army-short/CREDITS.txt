@@ -1,7 +1,6 @@
 WWII's Army of Rubber Tanks
 
 Audio credits:
-- Narration: synthesized with eSpeak NG (GPL-3.0 software; generated audio is not encumbered).
 - boing (aeva-boing-boing) — BOING! - Aeva (https://opengameart.org/content/boing), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged. — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
 - Erase 0 (fupi-erase-erase-0) — Erase / Escape — Fupi (CC0 1.0) — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
 - sfx100v2 loop machine 02 (rubberduck-general-100-2-sfx100v2-loop-machine-02) — 100 CC0 SFX #2 - rubberduck (https://opengameart.org/content/100-cc0-sfx-2), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged. — CC0-1.0 https://creativecommons.org/publicdomain/zero/1.0/. Changes: converted to WAV, timed to picture.
